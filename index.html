@@ -7,13 +7,16 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap">
 <style>
 :root{
-  --paper:#EEF3EC;--card:#FFFFFF;--ink:#1D2A22;--soft:#5E6E63;--matcha:#35774A;--mist:#D6E5D6;--sakura:#C43E63;--rose:#F7E3E9;--line:#C3D3C4;--gold:#B7862B;
+  --paper:#F6F1EA;--card:#FFFDF9;--ink:#3B3530;--soft:#857A70;--matcha:#9C6B48;--mist:#EFE5D9;--sakura:#C0584F;--rose:#F8E6E1;--line:#E3D8CB;--gold:#B98C33;
   box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){--paper:#121914;--card:#1B241E;--ink:#E4EDE6;--soft:#98A99D;--matcha:#79BF8C;--mist:#243329;--sakura:#E8809C;--rose:#3A2229;--line:#344638;--gold:#E0B45A}
-}
-:root[data-theme="dark"]{--paper:#121914;--card:#1B241E;--ink:#E4EDE6;--soft:#98A99D;--matcha:#79BF8C;--mist:#243329;--sakura:#E8809C;--rose:#3A2229;--line:#344638;--gold:#E0B45A}
+/* 配色：奶茶（預設）、天空、櫻花、夜間、抹茶 */
+:root[data-skin="sky"]{--paper:#EEF3F8;--card:#FFFFFF;--ink:#25303B;--soft:#6B7886;--matcha:#43729F;--mist:#DDE8F3;--sakura:#C4566A;--rose:#F6E3E7;--line:#D3DEE9;--gold:#B3852B}
+:root[data-skin="sakura"]{--paper:#FBF2F2;--card:#FFFCFC;--ink:#3D2E31;--soft:#8C7478;--matcha:#A95A6E;--mist:#F6E1E5;--sakura:#C0473F;--rose:#FBE3DE;--line:#EDD6DA;--gold:#B0852F}
+:root[data-skin="night"]{--paper:#1D1E22;--card:#26282D;--ink:#E6E2DB;--soft:#9D988F;--matcha:#CFA67B;--mist:#34312D;--sakura:#E38C8C;--rose:#3B2828;--line:#3A3B41;--gold:#DDB662}
+:root[data-skin="matcha"]{--paper:#EEF3EC;--card:#FFFFFF;--ink:#1D2A22;--soft:#5E6E63;--matcha:#35774A;--mist:#D6E5D6;--sakura:#C43E63;--rose:#F7E3E9;--line:#C3D3C4;--gold:#B7862B}
+:root[data-theme="dark"]:not([data-skin]){--paper:#1D1E22;--card:#26282D;--ink:#E6E2DB;--soft:#9D988F;--matcha:#CFA67B;--mist:#34312D;--sakura:#E38C8C;--rose:#3B2828;--line:#3A3B41;--gold:#DDB662}
+#skin{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:3px 10px;font-size:.85rem;color:var(--soft)}
 *,*::before,*::after{box-sizing:border-box}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;line-height:1.65}
@@ -228,9 +231,10 @@ th{background:var(--mist);font-weight:700}
 </style>
 </head>
 <body>
+<script>try{var k=localStorage.getItem("jpquiz-skin");if(k&&k!=="milk")document.documentElement.setAttribute("data-skin",k)}catch(e){}</script>
 <div class="wrap">
   <header>
-    <div class="brand"><h1>日文刷題</h1><span>第 1–24 課</span><span id="sync" class="small"></span></div>
+    <div class="brand"><h1>日文刷題</h1><span>第 1–24 課</span><span id="sync" class="small"></span><select id="skin" aria-label="配色"><option value="milk">🎨 奶茶</option><option value="sky">🎨 天空</option><option value="sakura">🎨 櫻花</option><option value="night">🎨 夜間</option><option value="matcha">🎨 抹茶</option></select></div>
     <nav role="tablist">
       <button role="tab" data-v="home" aria-selected="true">控制面板</button>
       <button role="tab" data-v="learn" aria-selected="false">學習</button>
@@ -3363,6 +3367,8 @@ function renderReview(){
   })();
 })();
 
+{const sk=document.getElementById("skin");let cur="milk";try{cur=localStorage.getItem("jpquiz-skin")||"milk"}catch(e){}sk.value=cur;
+ sk.onchange=()=>{const v=sk.value;if(v==="milk")document.documentElement.removeAttribute("data-skin");else document.documentElement.setAttribute("data-skin",v);try{localStorage.setItem("jpquiz-skin",v)}catch(e){}};}
 renderHome();
 })();
 </script>
