@@ -2778,9 +2778,10 @@ const get=k=>T.find(p=>p.key===k);
 const oldApps=["b:App③","b:App②","b:App④","b:App①","b:App⑤"].map(get).filter(Boolean);
 const order=NEW.concat(oldApps);
 const circ="①②③④⑤⑥⑦⑧⑨⑩⑪⑫⑬⑭⑮";
-order.forEach((p,i)=>{p.title="App"+circ[i]+"　"+p.title.replace(/^App[①-⑮]?\s*/,"")});
-const lessons=T.filter(p=>p.l).sort((a,b)=>a.l-b.l);
-T.length=0;lessons.concat(order).forEach(p=>T.push(p));
+/* App 的 12 頁改成第1–12課，跟課本單字放在一起 */
+order.forEach((p,i)=>{p.l=i+1;p.title="第"+(i+1)+"課"});
+const all=T.filter(p=>p.l&&!order.includes(p)).concat(order).sort((a,b)=>a.l-b.l);
+T.length=0;all.forEach(p=>T.push(p));
 })();
 
 </script>
