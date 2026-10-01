@@ -114,6 +114,20 @@ select{flex:1}
 .ans{color:var(--matcha);font-weight:700}
 .empty{padding:30px 10px;text-align:center;color:var(--soft)}
 .hide{display:none!important}
+.vk{text-decoration:underline;text-decoration-color:var(--matcha);text-decoration-thickness:2px;text-underline-offset:5px}
+sup.vn{color:var(--matcha);font-size:.55em;font-weight:700;margin-left:1px}
+.gq{margin-top:18px;padding-top:12px;border-top:1px dashed var(--line)}
+.gq .prompt{font-size:1.15rem}
+.gq .opts{margin-top:8px}
+.abook{margin-top:18px;border:1.5px solid var(--line);border-radius:14px;padding:14px 18px;background:var(--card)}
+.abook h4{margin:0 0 6px;font-size:1.1rem}
+.abook h5{margin:18px 0 6px;font-size:1rem;color:var(--matcha)}
+.abq{padding:10px 0;border-bottom:1px dashed var(--line)}
+.abq:last-of-type{border-bottom:0}
+.abq .ok{color:var(--matcha);font-weight:700}.abq .ng{color:var(--sakura);font-weight:700}
+.vlist{margin:0;padding-left:1.8em}.vlist li{padding:4px 0}
+.vlist .say{width:26px;height:26px;font-size:.7em;vertical-align:middle}
+
 #sync{color:var(--matcha);margin-left:4px}
 .paper-h{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--ink);padding-bottom:12px;margin-bottom:6px}
 .paper-h h2{margin:0;font-size:1.5rem}
@@ -677,6 +691,57 @@ reading: [
  ]}
 ]
 };
+
+</script>
+<script>
+/* 閱讀解答本 reading_notes.js
+   vocab：[文章裡的原文片段, 單字, 讀音, 中文]（原文片段用來在文章中畫底線）
+   gram：[句型, 說明]
+   qzh：題目中文；qd：詳細解析 */
+(function(){
+const N={
+r1:{qzh:["林是做什麼的？","田中先生是哪國人？","兩個人搭什麼去圖書館？"],
+ qd:["第一行寫「大学の学生です」（是大學的學生），所以答案是「学生です」。「会社員」是田中先生的職業，不是林；「先生」「医者」文中都沒有出現。",
+     "第二行「田中さんは日本人です」。選項「台湾人です」是在說林自己，不是田中。",
+     "最後一句「バスで行きます」，助詞「で」表示交通手段，所以是搭公車。電車、走路、飛機文中都沒有提到。"],
+ vocab:[["[林|りん]","林","りん","林（姓）"],["[台湾人|たいわんじん]","台湾人","たいわんじん","台灣人"],["[大学|だいがく]","大学","だいがく","大學"],["[学生|がくせい]","学生","がくせい","學生"],["[友達|ともだち]","友達","ともだち","朋友"],["[日本人|にほんじん]","日本人","にほんじん","日本人"],["[会社員|かいしゃいん]","会社員","かいしゃいん","公司職員"],["[毎週|まいしゅう]","毎週","まいしゅう","每週"],["[土曜日|どようび]","土曜日","どようび","星期六"],["いっしょに","一緒に","いっしょに","一起"],["[図書館|としょかん]","図書館","としょかん","圖書館"],["バス","バス","バス","公車"]],
+ gram:[["A は B です","A 是 B（名詞句）"],["名詞 の 名詞","わたしの友達：「の」表示所屬"],["人 と いっしょに","和某人一起"],["場所 へ 行きます","去某地，「へ」表示方向"],["交通工具 で","搭（交通工具），「で」表示手段"]]},
+r2:{qzh:["房間怎麼樣？","貓在哪裡？","小玉喜歡什麼？","「我」想買什麼？"],
+ qd:["第一句「あまり広くないですが、きれいです」＝不太寬敞，但是很乾淨。選項2「広くて」是很寬敞，跟原文相反；選項3說不乾淨，錯；選項4的「にぎやか（熱鬧）」文中沒提到。",
+     "「ベッドの下に猫がいます」＝床底下有貓。書桌上的是電腦和書，窗戶旁邊的是書桌。注意動物用「います」。",
+     "「タマは魚が大好きです」，喜歡的對象用助詞「が」。電腦和書是放在桌上的東西。",
+     "最後一句「新しい本棚を買いたいです」，「〜たいです」表示想做某事。電腦和書桌是房間裡已經有的東西。"],
+ vocab:[["[部屋|へや]","部屋","へや","房間"],["[広|ひろ]くない","広くない","ひろくない","不寬敞"],["きれい","きれい","きれい","乾淨、漂亮"],["[窓|まど]","窓","まど","窗戶"],["そば","そば","そば","旁邊"],["[机|つくえ]","机","つくえ","書桌"],["パソコン","パソコン","パソコン","電腦"],["ベッド","ベッド","ベッド","床"],["[猫|ねこ]","猫","ねこ","貓"],["[魚|さかな]","魚","さかな","魚"],["[大好|だいす]き","大好き","だいすき","最喜歡"],["[本棚|ほんだな]","本棚","ほんだな","書架"],["[買|か]いたい","買いたい","かいたい","想買"]],
+ gram:[["あまり〜ない","不太…"],["〜ですが、〜","雖然…，但是…"],["場所 に 物 が あります／動物 が います","某處有某物（存在句）"],["〜が 大好きです","喜好的對象用「が」"],["ます形去ます＋たいです","想做…"]]},
+r3:{qzh:["搭什麼去京都？","天氣怎麼樣？","哪一個是正確的？"],
+ qd:["第一行「新幹線で行きました」，「で」表示交通手段。",
+     "「天気はあまりよくなかったです。雨でした」＝天氣不太好，下雨了。選項「よかったです」正好相反；「暑かった」「雪」文中沒有提到。",
+     "文中說蕎麥麵「とてもおいしかったです」，所以選項1正確。選項2錯：是「友達と」和朋友一起去的；選項3錯：京都「にぎやかでした」很熱鬧，不是安靜；選項4錯：是「夜9時」晚上9點回家，不是早上。"],
+ vocab:[["[先週|せんしゅう]","先週","せんしゅう","上週"],["[京都|きょうと]","京都","きょうと","京都"],["[新幹線|しんかんせん]","新幹線","しんかんせん","新幹線"],["にぎやか","にぎやか","にぎやか","熱鬧"],["お[寺|てら]","お寺","おてら","寺廟"],["[古|ふる]い","古い","ふるい","古老的、舊的"],["[昼|ひる]ご[飯|はん]","昼ご飯","ひるごはん","午餐"],["[天気|てんき]","天気","てんき","天氣"],["[雨|あめ]","雨","あめ","雨"],["[帰|かえ]りました","帰りました","かえりました","回去了"],["[楽|たの]しかった","楽しかった","たのしかった","很開心"]],
+ gram:[["動詞〜ました","動詞過去式"],["な形容詞＋でした","にぎやかでした：な形容詞過去式"],["い形容詞去い＋かったです","おいしかった、楽しかった：い形容詞過去式"],["よくなかったです","「いい」的過去否定（特殊變化）"],["名詞 に","昼ご飯に：當作午餐"]]},
+r4:{qzh:["根據山田的說法，哪裡比較熱？","王最喜歡哪個季節？","兩個人星期天要做什麼？","兩個人幾點在哪裡見面？"],
+ qd:["山田回答「台湾の方が暑いです」（台灣比較熱）。他雖然補充「東京の夏も暑い」，但比較的答案是台灣。",
+     "王說「季節の中で冬が一番好きです」＝四季之中最喜歡冬天。",
+     "山田邀約「映画を見に行きませんか」（要不要一起去看電影），王回答「いいですね」表示答應。",
+     "山田提議「2時はどうですか」，王說「いいですよ。じゃ、駅で会いましょう」，所以是2點在車站見面。選項2的電影院、選項3和4的時間都不對。"],
+ vocab:[["どちら","どちら","どちら","哪一個（二選一）"],["[方|ほう]","方","ほう","（比較的）一方"],["[暑|あつ]い","暑い","あつい","（天氣）熱"],["[夏|なつ]","夏","なつ","夏天"],["[季節|きせつ]","季節","きせつ","季節"],["[冬|ふゆ]","冬","ふゆ","冬天"],["[一番|いちばん]","一番","いちばん","最"],["[映画|えいが]","映画","えいが","電影"],["[見|み]に [行|い]きませんか","見に行きませんか","みにいきませんか","要不要去看"],["[何時|なんじ]","何時","なんじ","幾點"],["[会|あ]いましょうか","会いましょうか","あいましょうか","要（幾點）見面呢"],["[駅|えき]","駅","えき","車站"]],
+ gram:[["A と B と どちらが〜ですか","A 和 B 哪個比較…？"],["A の方が〜です","A 比較…"],["〜の中で〜が一番〜","在…之中最…"],["ます形去ます＋に行きます","去做…（目的）"],["〜ませんか／〜ましょう","邀約／一起…吧"]]},
+r5:{qzh:["美術館裡面可以拍照嗎？","工作人員請客人做什麼？","廁所現在怎麼樣？"],
+ qd:["工作人員說「中はだめですが、外は撮ってもいいですよ」＝裡面不行，外面可以拍。題目問裡面，所以是「いいえ、だめです」。選項3「外もだめ」錯，外面可以；選項4「中だけいい」剛好相反。",
+     "「この紙に名前を書いてください」＝請在這張紙上寫名字。「〜てください」是請對方做某事。其他選項文中都沒有提到。",
+     "「今掃除をしていますから、ちょっと待ってください」＝現在正在打掃，所以請稍等。「〜ています」表示正在進行。"],
+ vocab:[["[客|きゃく]","客","きゃく","客人"],["[写真|しゃしん]","写真","しゃしん","照片"],["[撮|と]っても いいですか","撮ってもいいですか","とってもいいですか","可以拍嗎"],["[係|かかり]の [人|ひと]","係の人","かかりのひと","工作人員"],["だめ","だめ","だめ","不行"],["[外|そと]","外","そと","外面"],["ロッカー","ロッカー","ロッカー","置物櫃"],["[入|い]れても","入れても","いれても","放進去也（可以）"],["[紙|かみ]","紙","かみ","紙"],["[書|か]いて ください","書いてください","かいてください","請寫"],["[掃除|そうじ]","掃除","そうじ","打掃"],["[待|ま]って ください","待ってください","まってください","請等一下"]],
+ gram:[["て形＋もいいですか","可以…嗎？（請求許可）"],["て形＋ください","請…（要求）"],["て形＋います","正在…"],["〜から、〜","因為…所以…"],["A は〜が、B は〜","A 怎樣，但 B 怎樣（對比）"]]},
+r6:{qzh:["「我」把什麼忘在家裡？","回家路上順道去了哪裡？","哪一個是正確的？","最後「我」的心情如何？"],
+ qd:["「宿題を家に忘れてしまいました」＝不小心把功課忘在家裡。錢包是在電車上弄丟的，不是忘在家裡。",
+     "「帰りにコンビニに寄って、パンを買いました」，「寄る」是順道去。車站是後來去問錢包的地方。",
+     "「電車はとても込んでいました」＝電車很擁擠，所以選項1正確。選項2錯：問了車站的人「まだありません」，還沒找到；選項3錯：麵包是在便利商店買的；選項4錯：忘記功課的是「我」，不是老師。",
+     "最後一句「本当に悲しかったです」＝真的很難過。"],
+ vocab:[["[大変|たいへん]","大変","たいへん","辛苦、糟糕"],["[起|お]きて","起きて","おきて","起床（て形）"],["[顔|かお]","顔","かお","臉"],["[洗|あら]って","洗って","あらって","洗（て形）"],["[急|いそ]いで","急いで","いそいで","急忙地"],["[宿題|しゅくだい]","宿題","しゅくだい","功課"],["[忘|わす]れて しまいました","忘れてしまいました","わすれてしまいました","不小心忘了"],["[持|も]って きて ください","持ってきてください","もってきてください","請帶過來"],["[帰|かえ]りに","帰りに","かえりに","回家路上"],["[寄|よ]って","寄って","よって","順道去"],["[込|こ]んで いました","込んでいました","こんでいました","（當時）很擁擠"],["[財布|さいふ]","財布","さいふ","錢包"],["[落|お]として しまいました","落としてしまいました","おとしてしまいました","不小心弄丟了"],["[悲|かな]しかった","悲しかった","かなしかった","很難過"]],
+ gram:[["〜て、〜て、〜ました","依序做好幾個動作"],["て形＋しまいました","不小心…（遺憾）"],["て形＋きてください","請帶過來"],["帰りに〜に寄って","回家路上順道去…"],["まだ＋否定","還沒…"]]}
+};
+(window.BANK.reading||[]).forEach(p=>{if(N[p.id])Object.assign(p,N[p.id])});
+})();
 
 </script>
 <script>
@@ -2845,7 +2910,7 @@ V.forEach((v,i)=>{
   }
 });
 B.grammar.forEach((g,i)=>ALL.push({id:"g:"+g[0]+":"+g[1],type:"grammar",l:g[0],ord:3000+i,ask:"請選出正確答案",gq:g[1],ans:g[2][0],opts:g[2],exp:g[3],zh:g[4]}));
-B.reading.forEach((p,pi)=>p.qs.forEach((q,i)=>ALL.push({id:"r:"+p.id+":"+i,type:"reading",l:p.l,ord:4000+pi*10+i,passage:p,ask:q[0],ans:q[1][0],opts:q[1],exp:q[2]})));
+B.reading.forEach((p,pi)=>p.qs.forEach((q,i)=>ALL.push({id:"r:"+p.id+":"+i,type:"reading",l:p.l,ord:4000+pi*10+i,passage:p,qi:i,ask:q[0],ans:q[1][0],opts:q[1],exp:(p.qd&&p.qd[i])||q[2],zh:p.qzh&&p.qzh[i]})));
 let KJ=(B.kanji||[]).map(k=>Object.assign({},k,{sec:k.sec||`課本・第${k.l}課`}));
 const TH=B.themes||{outline:[],topics:{}};
 const TB=B.tbv||[];
@@ -2993,8 +3058,24 @@ function bindItems(root,after){
 
 /* ---------- 測驗 ---------- */
 let sess=null,tick=null;
+function annot(p){
+  let t=p.text;(p.vocab||[]).forEach((v,i)=>{const at=t.indexOf(v[0]);if(at<0)return;t=t.slice(0,at)+"\u0001"+v[0]+"\u0003"+i+"\u0004"+t.slice(at+v[0].length)});
+  return ruby(t).replace(/\u0001/g,'<u class="vk">').replace(/\u0003(\d+)\u0004/g,(m,n)=>`</u><sup class="vn">${+n+1}</sup>`);
+}
+function answerBook(p,subs){
+  const mark=s=>{if(s.sel==null)return '<span class="ng">✘ 沒有作答</span>';return s.opts[s.sel]===s.q.ans?'<span class="ok">✔ 答對</span>':`<span class="ng">✘ 你選「<span lang="ja">${esc(s.opts[s.sel])}</span>」</span>`};
+  return `<div class="abook"><h4>📘 解答與解析</h4>
+   ${subs.map((s,j)=>`<div class="abq"><div><b>第 ${j+1} 題</b>　<span lang="ja">${esc(s.q.ask)}</span></div>${s.q.zh?`<div class="muted small">（${esc(s.q.zh)}）</div>`:""}
+     <div style="margin-top:4px">正確答案：<b lang="ja">${esc(s.q.ans)}</b>　${mark(s)}</div><div style="margin-top:4px">${esc(s.q.exp)}</div></div>`).join("")}
+   <h5>全文翻譯</h5><div>${esc(p.zh).replace(/\n/g,"<br>")}</div>
+   ${(p.vocab||[]).length?`<h5>重點單字（對照文章底線編號）</h5><ol class="vlist">${p.vocab.map(v=>`<li><span lang="ja"><b>${esc(v[1])}</b>　${esc(v[2])}</span>　${esc(v[3])} <button class="say" data-say="${esc(v[2])}" aria-label="發音">🔊</button></li>`).join("")}</ol>`:""}
+   ${(p.gram||[]).length?`<h5>文法重點</h5><ul class="vlist">${p.gram.map(g=>`<li><b lang="ja">${esc(g[0])}</b>　${esc(g[1])}</li>`).join("")}</ul>`:""}</div>`;
+}
+const isOK=x=>x.grp?x.subs.every(s=>s.sel!=null&&s.opts[s.sel]===s.q.ans):(x.sel!=null&&x.opts[x.sel]===x.q.ans);
 function startSession(qs,mode){
-  sess={mode,items:qs.map(inst),cur:0,t0:Date.now(),limit:mode==="exam"?qs.length*60:0,over:false};
+  const items=[],gm=new Map();
+  qs.forEach(q=>{if(q.passage){if(!gm.has(q.passage.id)){const g={grp:true,passage:q.passage,q,opts:[],checked:false,subs:ALL.filter(x=>x.passage===q.passage).sort((a,b)=>a.qi-b.qi).map(inst)};gm.set(q.passage.id,g);items.push(g)}}else items.push(inst(q))});
+  sess={mode,items,cur:0,t0:Date.now(),limit:mode==="exam"?qs.length*60:0,over:false};
   clearInterval(tick);tick=setInterval(updTimer,1000);
   show("quiz");
 }
@@ -3005,7 +3086,7 @@ function updTimer(){
   if(sess.limit){const left=sess.limit-e;if(el){el.textContent="剩餘 "+fmt(Math.max(0,left));el.classList.toggle("low",left<=60)}if(left<=0)finish();}
   else if(el)el.textContent=fmt(e);
 }
-let ruby_on=true;
+let ruby_on=false;
 function renderQuiz(){
   const root=document.getElementById("v-quiz");
   if(!sess){root.innerHTML=`<div class="panel empty">還沒有開始練習。到「控制面板」選好範圍後按「開始練習」。</div>`;return}
@@ -3013,7 +3094,14 @@ function renderQuiz(){
   const it=sess.items[sess.cur],q=it.q,exam=sess.mode==="exam",n=sess.items.length;
   const mName=MODES.find(m=>m[0]===sess.mode)[1];
   let body="";
-  if(q.passage){
+  if(it.grp){
+    const p=it.passage,showA=it.checked&&!exam;
+    body+=`<div class="ptools"><button class="ghost small" id="rb">${ruby_on||showA?"隱藏讀音":"顯示讀音"}</button><button class="ghost small" id="ps">🔊 朗讀文章</button></div>
+      <div class="passage ${ruby_on||showA?"":"noruby"}" lang="ja"><b>${esc(p.title)}</b><br>${showA?annot(p):ruby(p.text)}</div>
+      ${it.subs.map((s,j)=>`<div class="gq"><div class="prompt" lang="ja">${j+1}. ${esc(s.q.ask)}</div><div class="opts">${s.opts.map((o,i)=>{let c="opt";if(s.sel===i)c+=" sel";if(showA){if(o===s.q.ans)c+=" right";else if(s.sel===i)c+=" wrong"}
+        return `<button class="${c}" data-gs="${j}" data-go="${i}"><span class="k">${i+1}</span><span${la(o)}>${esc(o)}</span></button>`}).join("")}</div></div>`).join("")}
+      ${showA?answerBook(p,it.subs):(exam?"":`<div style="margin-top:16px"><button class="finish" id="gchk">對答案</button></div>`)}`;
+  }else if(q.passage){
     body+=`<div class="ptools"><button class="ghost small" id="rb">${ruby_on?"隱藏假名":"顯示假名"}</button><button class="ghost small" id="ps">🔊 朗讀文章</button>${it.checked?`<button class="ghost small" id="tr">看中文翻譯</button>`:""}</div>
       <div class="passage ${ruby_on?"":"noruby"}" lang="ja"><b>${esc(q.passage.title)}</b><br>${ruby(q.passage.text)}</div><div id="trbox" class="hide exp" style="margin:-4px 0 16px">${esc(q.passage.zh).replace(/\n/g,"<br>")}</div>
       <div class="prompt" lang="ja">${esc(q.ask)}</div>`;
@@ -3023,10 +3111,10 @@ function renderQuiz(){
     body+=`<div class="ask">${esc(q.ask)}</div><div class="prompt big">${esc(q.zhp)}</div>`;
   }else{
     body+=`<div class="ask">${esc(q.ask)}</div><div class="prompt big" lang="ja">${esc(q.jp)}<button class="say" id="say" aria-label="發音">🔊</button></div>`+
-      (q.sub&&q.type!=="vocab"?`<div class="subp" lang="ja">${esc(q.sub)}</div>`:"")+(q.type==="vocab"&&q.id.endsWith(":m")&&q.sub?`<div class="subp" lang="ja">${esc(q.sub)}</div>`:"");
+      (it.checked&&q.sub?`<div class="subp" lang="ja">${esc(q.sub)}</div>`:"");
   }
-  const showAns=it.checked&&!exam;
-  body+=`<div class="opts">${it.opts.map((o,i)=>{
+  const showAns=it.checked&&!exam&&!it.grp;
+  if(!it.grp)body+=`<div class="opts">${it.opts.map((o,i)=>{
     let c="opt";if(it.sel===i)c+=" sel";
     if(showAns){if(o===q.ans)c+=" right";else if(it.sel===i)c+=" wrong"}
     return `<button class="${c}" data-o="${i}"><span class="k">${i+1}</span><span${la(o)}>${esc(o)}</span></button>`}).join("")}</div>`;
@@ -3036,7 +3124,7 @@ function renderQuiz(){
   }
   const last=sess.cur===n-1;
   const dots=sess.items.map((x,i)=>{let c=i===sess.cur?"cur":"";
-    if(exam){if(x.sel!=null)c+=" done"}else if(x.checked)c+=x.opts[x.sel]===x.q.ans?" ok":" no";
+    if(exam){if(x.grp?x.subs.every(s=>s.sel!=null):x.sel!=null)c+=" done"}else if(x.checked)c+=isOK(x)?" ok":" no";
     return `<button class="${c}" data-d="${i}">${i+1}</button>`}).join("");
   root.innerHTML=`<div class="qbar"><div class="left"><span class="count">第 ${sess.cur+1} / ${n} 題</span><span class="muted">${mName}</span></div>
     <div class="left"><span class="timer" id="timer"></span><button class="ghost small" id="quit">結束本輪</button></div></div>
@@ -3048,6 +3136,9 @@ function renderQuiz(){
     <div class="dots">${dots}</div>${exam?`<p class="muted small" style="margin:12px 0 0">模擬考模式：按「完成測驗」後才會公布分數和答案。可以隨時點上面的題號跳回去改。</p>`:""}</div>`;
   updTimer();
   root.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>choose(+b.dataset.o));
+  root.querySelectorAll("[data-gs]").forEach(b=>b.onclick=()=>{if(it.checked&&!exam)return;it.subs[+b.dataset.gs].sel=+b.dataset.go;const y=window.scrollY;renderQuiz();window.scrollTo(0,y)});
+  root.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>speak(b.dataset.say));
+  {const e=document.getElementById("gchk");if(e)e.onclick=()=>{const n=it.subs.filter(s=>s.sel==null).length;if(n&&!confirm(`還有 ${n} 題沒作答，確定要對答案嗎？`))return;it.checked=true;it.subs.forEach(s=>rec(s.q,s.sel!=null&&s.opts[s.sel]===s.q.ans));updTab();const y=window.scrollY;renderQuiz();window.scrollTo(0,y);const ab=document.querySelector(".abook");if(ab)ab.scrollIntoView({behavior:"smooth",block:"start"})}}
   root.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>{sess.cur=+b.dataset.d;renderQuiz()});
   const on=(id,f)=>{const e=document.getElementById(id);if(e)e.onclick=f};
   bindLearn(root);
@@ -3057,7 +3148,7 @@ function renderQuiz(){
   on("quit",()=>{if(confirm("確定要結束這一輪嗎？已作答的紀錄會保留。")){if(exam)finish();else{sess.over=true;clearInterval(tick);renderQuiz()}}});
   on("fav",()=>{toggleFav(q.id);renderQuiz();updTab()});
   on("say",()=>speak(q.say));
-  on("ps",()=>speak(plain(q.passage.text).replace(/.+?：/gm,"")));
+  on("ps",()=>speak(plain((it.passage||q.passage).text).replace(/.+?：/gm,"")));
   on("rb",()=>{ruby_on=!ruby_on;renderQuiz()});
   on("tr",()=>document.getElementById("trbox").classList.toggle("hide"));
 }
@@ -3073,13 +3164,13 @@ function choose(i){
 function finish(){
   if(!sess||sess.over)return;
   clearInterval(tick);
-  if(sess.mode==="exam")sess.items.forEach(it=>{it.checked=true;if(it.sel!=null)rec(it.q,it.opts[it.sel]===it.q.ans);else rec(it.q,false)});
+  if(sess.mode==="exam")sess.items.forEach(it=>{it.checked=true;if(it.grp)it.subs.forEach(s=>rec(s.q,s.sel!=null&&s.opts[s.sel]===s.q.ans));else if(it.sel!=null)rec(it.q,it.opts[it.sel]===it.q.ans);else rec(it.q,false)});
   sess.over=true;sess.t1=Date.now();
   if(view!=="quiz")show("quiz");else renderQuiz();
 }
 function renderResult(){
   const root=document.getElementById("v-quiz");
-  const done=sess.items.filter(x=>x.checked);
+  const done=sess.items.filter(x=>x.checked).flatMap(x=>x.grp?x.subs:[x]);
   const ok=done.filter(x=>x.sel!=null&&x.opts[x.sel]===x.q.ans).length;
   const bad=done.filter(x=>!(x.sel!=null&&x.opts[x.sel]===x.q.ans));
   const pct=done.length?Math.round(ok/done.length*100):0;
@@ -3094,6 +3185,7 @@ function renderResult(){
 document.addEventListener("keydown",e=>{
   if(view!=="quiz"||!sess||sess.over||/INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName))return;
   const it=sess.items[sess.cur];
+  if(it.grp){if(e.key==="ArrowRight"||e.key==="Enter"){const b=document.getElementById("next")||document.getElementById("fin");if(b&&!b.disabled){e.preventDefault();b.click()}}return}
   if(/^[1-4]$/.test(e.key)&&+e.key<=it.opts.length)choose(+e.key-1);
   else if(e.key==="ArrowRight"||e.key==="Enter"){const b=document.getElementById("next")||document.getElementById("fin");if(b&&!b.disabled){e.preventDefault();b.click()}}
   else if(e.key==="ArrowLeft"&&sess.cur>0){sess.cur--;renderQuiz()}
@@ -3305,13 +3397,15 @@ function renderPaper(){
     else if(q.type==="conj")t=`<span lang="ja"><u>${esc(q.jp)}</u></span>　${esc(q.ask)}`;
     else t=`<u lang="ja">${esc(q.jp)}</u>　是什麼意思？`;
     const ok=done&&it.sel!=null&&it.opts[it.sel]===q.ans;
-    if(done&&onlyWrong&&ok)return "";
-    let pass="";if(q.passage&&!passShown.has(q.passage.id)){passShown.add(q.passage.id);pass=`<div class="passage" lang="ja" style="margin-top:14px"><b>${esc(q.passage.title)}</b><br>${ruby(q.passage.text)}</div>`}
+    if(done&&onlyWrong&&ok)return book;
+    let pass="";if(q.passage&&!passShown.has(q.passage.id)){passShown.add(q.passage.id);pass=`<div class="passage ${done?"":"noruby"}" lang="ja" style="margin-top:14px"><b>${esc(q.passage.title)}</b><br>${done?annot(q.passage):ruby(q.passage.text)}</div>`}
+    const book=done&&q.passage&&lastOf.has(it)?answerBook(q.passage,all.filter(x=>x.q.passage===q.passage)):"";
     return pass+`<div class="pq" id="pq${no}"><div class="qt"><span class="qn">${no}.</span>${t}</div>
       <div class="popts">${it.opts.map((o,i)=>{let c="popt";if(it.sel===i)c+=" sel";if(done){if(o===q.ans)c+=" right";else if(it.sel===i)c+=" wrong"}
         return `<button class="${c}" data-pi="${no-1}" data-o="${i}" ${done?"disabled":""}><span class="k">${i+1}</span><span${la(o)}>${esc(o)}</span></button>`}).join("")}</div>
-      ${done&&!ok?`<div class="pexp">${it.sel==null?"沒有作答。":""}正確答案：<b${la(q.ans)}>${esc(q.ans)}</b>　${esc(q.exp)}${q.zh?`<span class="muted">（${esc(q.zh)}）</span>`:""}</div>`:""}</div>`};
+      ${done&&!ok&&!q.passage?`<div class="pexp">${it.sel==null?"沒有作答。":""}正確答案：<b${la(q.ans)}>${esc(q.ans)}</b>　${esc(q.exp)}${q.zh?`<span class="muted">（${esc(q.zh)}）</span>`:""}</div>`:""}</div>`+book};
   const all=pAll();
+  const lastOf=new Set();{const lp=new Map();all.forEach(x=>{if(x.q.passage)lp.set(x.q.passage.id,x)});lp.forEach(x=>lastOf.add(x))}
   let score="";
   if(done){
     const secScore=paper.secs.map(sc=>{const its=sc.parts.flatMap(p=>p.items);const c=its.filter(x=>x.sel!=null&&x.opts[x.sel]===x.q.ans).length;return [sc.t.split("　")[1]||sc.t,c,its.length]});
@@ -3324,6 +3418,7 @@ function renderPaper(){
     ${score}
     ${paper.secs.map(sc=>`<div class="psec"><h3>${esc(sc.t)}</h3>${sc.parts.map(pt=>`<div class="pinst">${esc(pt.inst)}</div>${pt.items.map(qHTML).join("")}`).join("")}</div>`).join("")}
     <div class="pfoot">${done?`<button class="primary" id="pnew">再出一張</button><button class="ghost" id="pset">換範圍</button>`:`<span class="muted" style="align-self:center" id="pleft"></span><button class="finish" id="psub">交卷</button>`}</div></div>`;
+  root.querySelectorAll("#v-paper [data-say], .abook [data-say]").forEach(b=>b.onclick=()=>speak(b.dataset.say));
   const upd=()=>{const l=document.getElementById("pleft");if(l){const n=all.filter(x=>x.sel==null).length;l.textContent=n?`還有 ${n} 題沒寫`:"全部寫完了"}};upd();
   root.querySelectorAll("[data-pi]").forEach(b=>b.onclick=()=>{const it=all[+b.dataset.pi];it.sel=+b.dataset.o;b.parentNode.querySelectorAll(".popt").forEach(x=>x.classList.toggle("sel",x===b));upd()});
   const sub=document.getElementById("psub");if(sub)sub.onclick=()=>{const n=all.filter(x=>x.sel==null).length;if(n&&!confirm(`還有 ${n} 題沒寫，確定要交卷嗎？`))return;
