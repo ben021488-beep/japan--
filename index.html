@@ -2787,7 +2787,7 @@ T.length=0;lessons.concat(order).forEach(p=>T.push(p));
 <script>
 (function(){
 const B=window.BANK;
-const TYPES=[["vocab","課本單字"],["theme","主題單字"],["kanji","漢字"],["conj","動詞變化"],["grammar","文法"],["reading","閱讀"]];
+const TYPES=[["vocab","課本單字"],["kanji","漢字"],["conj","動詞變化"],["grammar","文法"],["reading","閱讀"]];
 const TN=Object.fromEntries(TYPES);
 const MODES=[["practice","精熟練習","隨機出題，答完立刻看解析"],["seq","依序練習","照課程順序出題"],["exam","計時模擬考","每題 60 秒，交卷才公布答案"],["wrong","只練錯題","從答錯過的題目出題"]];
 const GN={I:"第I類",II:"第II類",III:"第III類"};
@@ -2849,26 +2849,33 @@ let KJ=(B.kanji||[]).map(k=>Object.assign({},k,{sec:k.sec||`課本・第${k.l}�
 const TH=B.themes||{outline:[],topics:{}};
 const TB=B.tbv||[];
 const tbHead=w=>{const x=w[1]||"";return (x&&/[\u3040-\u30ff\u3400-\u9fff]/.test(x)&&!/[A-Za-z]/.test(x))?x.replace(/\[(.)\]/g,"$1"):w[0]};
-/* 去除重複單字：小學漢字優先，其次課本漢字，最後主題單字 */
+/* 整理單字：小學漢字優先，其次課本單字；原本的主題單字和第13–15課漢字卡，改成「補充單字」放進對應的小學漢字 */
+let EXTRA=[];
 (function(){
   const own=new Map();
-  const ord=KJ.map((k,i)=>({k,i})).sort((a,b)=>((a.k.grade||99)-(b.k.grade||99))||(a.i-b.i)).map(x=>x.k);
-  ord.forEach(k=>{if(!own.has(k.w[0])){own.set(k.w[0],k);k._main=true}});
-  ord.forEach(k=>{
+  const G=KJ.map((k,i)=>({k,i})).filter(x=>x.k.grade).sort((a,b)=>(a.k.grade-b.k.grade)||(a.i-b.i)).map(x=>x.k);
+  const OLD=KJ.filter(k=>!k.grade);
+  G.forEach(k=>{if(!own.has(k.w[0])){own.set(k.w[0],k);k._main=true}});
+  G.forEach(k=>{
     const rel=(k.rel||[]).filter(r=>{if(own.has(r[0]))return false;own.set(r[0],k);return true});
     if(!k._main){if(rel.length){k.w=rel.shift();k.s=null;k.n=null}else{k.ref=own.get(k.w[0]);k.refWord=k.w[0];k.w=null}}
     k.rel=rel;
   });
-  KJ=KJ.filter(k=>k.w||k.grade);
   TB.forEach(p=>{p._show=[];p._dup=[];p.words.forEach(w=>{const h=tbHead(w);if(own.has(h))p._dup.push(h);else{own.set(h,true);p._show.push(w)}})});
-  Object.values(TH.topics).forEach(o=>{o.words=o.words.filter(w=>{if(own.has(w[0]))return false;own.set(w[0],true);return true})});
+  const sup=[];
+  OLD.forEach(k=>{sup.push([k.w[0],k.w[1],k.w[2],k.s?k.s[0]:"",k.s?k.s[1]:"",k.n||""]);(k.rel||[]).forEach(r=>sup.push([r[0],r[1],r[2],"","",""]))});
+  TH.outline.flatMap(c=>c[1]).forEach(t=>{const o=TH.topics[t];if(o)o.words.forEach(w=>sup.push([w[0],w[1],w[2],w[4]||"",w[5]||"",w[6]||""]))});
+  const byK={};G.forEach(k=>{if(!byK[k.k])byK[k.k]=k});
+  sup.forEach(x=>{if(own.has(x[0]))return;own.set(x[0],true);const c=[...x[0]].find(ch=>byK[ch]);if(c){const k=byK[c];(k.sup=k.sup||[]).push(x)}else EXTRA.push(x)});
+  KJ=G;
+  TH.topics={};TH.outline=[];
 })();
-const SECS=[...new Set(KJ.filter(k=>k.grade).map(k=>k.sec))].concat([...new Set(KJ.filter(k=>!k.grade).map(k=>k.l))].sort((a,b)=>b-a).map(l=>`課本・第${l}課`));
-const KW=[];{const seen=new Set();KJ.forEach(k=>[k.w].concat(k.rel||[]).filter(Boolean).forEach(x=>{const key=k.sec+"|"+x[0];if(!seen.has(key)){seen.add(key);KW.push({w:x[0],r:x[1],m:x[2],l:k.l,sec:k.sec})}}))}
+const SECS=[...new Set(KJ.map(k=>k.sec))].concat(EXTRA.length?["x:補充"]:[]);
+const KW=[];{const seen=new Set();KJ.forEach(k=>[k.w].concat(k.rel||[],k.sup||[]).filter(Boolean).forEach(x=>{const key=k.sec+"|"+x[0];if(!seen.has(key)){seen.add(key);KW.push({w:x[0],r:x[1],m:x[2],l:k.l,sec:k.sec})}}));EXTRA.forEach(x=>KW.push({w:x[0],r:x[1],m:x[2],sec:"x:補充"}))}
 const kwWrong=(x,f)=>shuffle([...new Set(KW.filter(y=>y[f]!==x[f]).map(y=>y[f]))]).slice(0,3);
 KW.forEach((x,i)=>{
   const id="k:"+x.sec+"|"+x.w;
-  ALL.push({id:id+":r",type:"kanji",l:x.l,sec:x.sec,ord:5000+i,say:x.r,ask:"讀音是？",jp:x.w,ans:x.r,gen:()=>kwWrong(x,"r"),exp:`${x.w}（${x.r}）＝ ${x.m}`});
+  if(x.w!==x.r)ALL.push({id:id+":r",type:"kanji",l:x.l,sec:x.sec,ord:5000+i,say:x.r,ask:"讀音是？",jp:x.w,ans:x.r,gen:()=>kwWrong(x,"r"),exp:`${x.w}（${x.r}）＝ ${x.m}`});
   ALL.push({id:id+":m",type:"kanji",l:x.l,sec:x.sec,ord:5000+i,say:x.r,ask:"這個字是什麼意思？",jp:x.w,sub:x.r,ans:x.m,gen:()=>kwWrong(x,"m"),exp:`${x.w}（${x.r}）＝ ${x.m}`});
 });
 const TW=[];Object.entries(TH.topics).forEach(([t,o])=>o.words.forEach(w=>TW.push({t,w:w[0],r:w[1],m:w[2],lv:w[3]})));
@@ -3144,7 +3151,7 @@ const TFILLED=Object.keys(TH.topics).filter(t=>TH.topics[t].words.length);
 const PAGES_OK=x=>x.startsWith("t:")?TFILLED.includes(x.slice(2)):x.startsWith("b:")?TB.some(p=>p.key===x):SECS.includes(x);
 let ksec=(S.ksec&&PAGES_OK(S.ksec))?S.ksec:(TFILLED.length?"t:"+TFILLED[0]:SECS[0]),hideRd=false;
 const PAGES=TH.outline.flatMap(c=>c[1]).filter(t=>TFILLED.includes(t)).map(t=>"t:"+t).concat(SECS).concat(TB.map(p=>p.key));
-function kNm(x){if(x.startsWith("b:")){const p=TB.find(q=>q.key===x);return p?p.title:x.slice(2)}return x.replace(/^t:/,"").replace(/^小[一二三四五六]・/,"").replace(/^課本・/,"")}
+function kNm(x){if(x==="x:補充")return "補充單字";if(x.startsWith("b:")){const p=TB.find(q=>q.key===x);return p?p.title:x.slice(2)}return x.replace(/^t:/,"").replace(/^小[一二三四五六]・/,"").replace(/^課本・/,"")}
 function renderKanji(nav){
   const root=document.getElementById("v-kanji");
   const nm=kNm;
@@ -3153,8 +3160,8 @@ function renderKanji(nav){
   const btn=x=>`<button data-sec="${esc(x)}">${btnIn(x)}</button>`;
   /* 目錄只建立一次，之後不重畫，捲動位置就不會跳走 */
   if(!root.querySelector(".kwrap")){
-  const side=`<aside class="panel side toc2"><div class="lab">主題單字</div>${TH.outline.map(c=>`<div class="cat">${esc(c[0])}</div>${c[1].map(t=>TFILLED.includes(t)?btn("t:"+t):"").join("")}`).join("")}
-    ${[...[1,2,3,4,5,6].map(g=>[`小學${GN[g]}年級漢字`,SECS.filter(x=>x.startsWith(`小${GN[g]}・`))]),["課本漢字",SECS.filter(x=>x.startsWith("課本"))],["課本單字",TB.filter(p=>p.l).map(p=>p.key)],["App 單字",TB.filter(p=>!p.l).map(p=>p.key)]].filter(g=>g[1].length).map(g=>`<div class="lab" style="margin-top:14px">${g[0]}</div>${g[1].map(btn).join("")}`).join("")}</aside>`;
+  const side=`<aside class="panel side toc2">${TFILLED.length?'<div class="lab">主題單字</div>':""}${TH.outline.map(c=>`<div class="cat">${esc(c[0])}</div>${c[1].map(t=>TFILLED.includes(t)?btn("t:"+t):"").join("")}`).join("")}
+    ${[...[1,2,3,4,5,6].map(g=>[`小學${GN[g]}年級漢字`,SECS.filter(x=>x.startsWith(`小${GN[g]}・`))]),["補充單字（沒有小學漢字的字）",SECS.filter(x=>x==="x:補充")],["課本單字",TB.filter(p=>p.l).map(p=>p.key)],["App 單字",TB.filter(p=>!p.l).map(p=>p.key)]].filter(g=>g[1].length).map(g=>`<div class="lab" style="margin-top:14px">${g[0]}</div>${g[1].map(btn).join("")}`).join("")}</aside>`;
     root.innerHTML=`<div class="kwrap">${side}<div id="kmain"></div></div>`;
     root.querySelector(".side").addEventListener("click",e=>{const b=e.target.closest("[data-sec]");if(!b)return;ksec=b.dataset.sec;renderKanji(true)});
   }
@@ -3163,7 +3170,11 @@ function renderKanji(nav){
   const say=t=>`<button class="say" data-say="${esc(t)}" aria-label="發音">🔊</button>`;
   const isT=ksec.startsWith("t:"),idx=PAGES.indexOf(ksec);
   let head,body,count;
-  if(ksec.startsWith("b:")){
+  if(ksec==="x:補充"){
+    count=EXTRA.length;
+    head=`<div class="muted small">補充單字　${count} 個單字</div><h2>補充單字</h2>`;
+    body=`<p class="muted small">這些字沒有用到小學一到四年級的漢字（例如高年級漢字「忘、洗」、外來語、只寫假名的字），找不到對應的單元，所以集中放在這裡。</p>`+EXTRA.map((r,i)=>`<div class="tw subw"><span class="no">${String(i+1).padStart(2,"0")}</span><div><div class="kword"><span class="w" lang="ja">${esc(r[0])}</span>${r[0]!==r[1]?rd(r[1],"r"):""}${say(r[1])}<span class="m">${esc(r[2])}</span></div>${r[3]?`<div class="ksent" lang="ja" style="font-size:1rem"><span>${ruby(r[3])}</span>${say(plain(r[3]))}</div><div class="kzh">${esc(r[4])}</div>`:""}${r[5]?`<div class="knote">${esc(r[5])}</div>`:""}</div></div>`).join("");
+  }else if(ksec.startsWith("b:")){
     const p=TB.find(q=>q.key===ksec);count=p._show.length;
     head=`<div class="muted small">${p.l?"課本單字":"App 單字"}　${count} 個單字</div><h2>${esc(p.title)}</h2>`;
     body=p._show.map((w,i)=>{const h=tbHead(w),en=w[1]&&/[A-Za-z]/.test(w[1])?w[1]:"";return `<div class="tw subw"><span class="no">${String(i+1).padStart(2,"0")}</span><div><div class="kword"><span class="w" lang="ja">${esc(h)}</span>${h!==w[0]?rd(w[0],"r"):""}${say(w[0].replace(/^〜/,""))}<span class="m">${esc(w[2])}</span>${en?`<span class="muted small">${esc(en)}</span>`:""}${w[3]?`<span class="lvl" title="語調">${esc(w[3])}</span>`:""}</div></div></div>`}).join("")
@@ -3187,21 +3198,22 @@ function renderKanji(nav){
         ${k.s?`<div class="ksent" lang="ja"><span>${ruby(k.s[0])}</span>${say(plain(k.s[0]))}</div><div class="kzh">${esc(k.s[1])}</div>`:""}
         ${k.n?`<div class="knote">${esc(k.n)}</div>`:""}</div></div>`;
         const subs=(k.rel||[]).map(r=>`<div class="tw subw"><span class="no"></span><div><div class="kword"><span class="w" lang="ja">${esc(r[0])}</span>${rd(r[1],"r")}${say(r[1])}<span class="m">${esc(r[2])}</span></div></div></div>`).join("");
-        return main+subs}).join("");
+        const sups=(k.sup||[]).map(r=>`<div class="tw subw"><span class="no"></span><div><div class="kword"><span class="w" lang="ja">${esc(r[0])}</span>${r[0]!==r[1]?rd(r[1],"r"):""}${say(r[1])}<span class="m">${esc(r[2])}</span><span class="lvl">補充</span></div>${r[3]?`<div class="ksent" lang="ja" style="font-size:1rem"><span>${ruby(r[3])}</span>${say(plain(r[3]))}</div><div class="kzh">${esc(r[4])}</div>`:""}${r[5]?`<div class="knote">${esc(r[5])}</div>`:""}</div></div>`).join("");
+        return main+subs+sups}).join("");
     }
-    head=`<div class="muted small">${ksec.startsWith("課本")?"課本漢字":`小學${ksec[1]}年級`}　${count} 個漢字${S.kview!=="kanji"?"、"+list.reduce((a,k)=>a+(k.w?1:0)+(k.rel||[]).length,0)+" 個單字":""}</div><h2>${esc(nm(ksec))}</h2>`;
+    head=`<div class="muted small">${ksec.startsWith("課本")?"課本漢字":`小學${ksec[1]}年級`}　${count} 個漢字${S.kview!=="kanji"?"、"+list.reduce((a,k)=>a+(k.w?1:0)+(k.rel||[]).length+(k.sup||[]).length,0)+" 個單字":""}</div><h2>${esc(nm(ksec))}</h2>`;
     if(S.kview==="kanji")body=list.map((k,i)=>`<article class="bk">
     <div class="bkk"><div class="kbig" lang="ja">${esc(k.k)}</div><div class="kmeta"><div>${esc(k.m)}</div><div>音 <b>${rd(k.on)}</b></div><div>訓 <b>${rd(k.kun)}</b></div></div></div>
     <div>${k.w?`<div class="kword"><span class="no">${String(i+1).padStart(2,"0")}</span><span class="w" lang="ja">${esc(k.w[0])}</span>${rd(k.w[1],"r")}${say(k.w[1])}<span class="m">${esc(k.w[2])}</span></div>`:`<div class="muted">單字「<span lang="ja">${esc(k.refWord)}</span>」已收在「<span lang="ja">${esc(k.ref.k)}</span>」</div>`}
       ${k.s?`<div class="ksent" lang="ja"><span>${ruby(k.s[0])}</span>${say(plain(k.s[0]))}</div><div class="kzh">${esc(k.s[1])}</div>`:""}
       ${k.n?`<div class="knote">${esc(k.n)}</div>`:""}
-      ${k.rel&&k.rel.length?`<ul class="relist">${k.rel.map(r=>`<li><span class="w" lang="ja">${esc(r[0])}</span>${rd(r[1],"r")}<span>${esc(r[2])}</span>${say(r[1])}</li>`).join("")}</ul>`:""}
+      ${(k.rel||[]).length+(k.sup||[]).length?`<ul class="relist">${(k.rel||[]).map(r=>`<li><span class="w" lang="ja">${esc(r[0])}</span>${rd(r[1],"r")}<span>${esc(r[2])}</span>${say(r[1])}</li>`).join("")}${(k.sup||[]).map(r=>`<li><span class="w" lang="ja">${esc(r[0])}</span>${r[0]!==r[1]?rd(r[1],"r"):"<span></span>"}<span>${esc(r[2])} <span class="lvl">補充</span></span>${say(r[1])}</li>`).join("")}</ul>`:""}
     </div></article>`).join("");
   }
   const done=S.done.includes(ksec);
   const main=root.querySelector("#kmain");
   main.innerHTML=`<div class="panel ${hideRd?"hr":""}">
-    <div class="bkhead"><div>${head}</div><div style="display:flex;gap:8px;flex-wrap:wrap">${isT||ksec.startsWith("b:")?"":`<button class="chip" id="kv">${S.kview==="kanji"?"改成單字排法":"改成漢字排法"}</button>`}<button class="chip" id="hid" aria-pressed="${hideRd}">${hideRd?"讀音已遮住（點一下看答案）":"遮住讀音"}</button></div></div>
+    <div class="bkhead"><div>${head}</div><div style="display:flex;gap:8px;flex-wrap:wrap">${isT||ksec.startsWith("b:")||ksec==="x:補充"?"":`<button class="chip" id="kv">${S.kview==="kanji"?"改成單字排法":"改成漢字排法"}</button>`}<button class="chip" id="hid" aria-pressed="${hideRd}">${hideRd?"讀音已遮住（點一下看答案）":"遮住讀音"}</button></div></div>
     ${body}
     <div class="lbtns" style="margin-top:18px"><button class="primary" id="kq">練習這一頁</button><button class="ghost" id="kd">${done?"✓ 已讀完（點一下取消）":"標記為已讀完"}</button>${idx<PAGES.length-1?`<button class="ghost" id="kx">下一頁：${esc(nm(PAGES[idx+1]))}</button>`:""}</div>
   </div>`;
