@@ -114,6 +114,7 @@ select{flex:1}
 .ans{color:var(--matcha);font-weight:700}
 .empty{padding:30px 10px;text-align:center;color:var(--soft)}
 .hide{display:none!important}
+#wtest{margin-top:16px}
 .nbpaper{--grid:color-mix(in srgb,var(--line) 55%,transparent);background-color:var(--card);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;background-position:-1px -1px}
 .nbpaper .nbsheet{background:color-mix(in srgb,var(--card) 82%,transparent);border-radius:12px}
 .nbg{margin:18px 0 6px}
@@ -291,6 +292,7 @@ th{background:var(--mist);font-weight:700}
   <section id="v-home">
     <div class="stats" id="stats"></div>
     <div class="grid2">
+      <div>
       <div class="panel">
         <h2>建立練習</h2>
         <div class="field">
@@ -310,6 +312,15 @@ th{background:var(--mist);font-weight:700}
           <div class="range"><input type="number" id="num" min="1" value="20" style="width:7em"><span class="muted small" id="avail"></span></div>
         </div>
         <button class="go" id="start">開始練習</button>
+      </div>
+      <div class="panel" id="wtest">
+        <h2>考單字</h2>
+        <div class="field"><label for="wsrc" class="lab">範圍</label><select id="wsrc" style="width:100%"></select></div>
+        <p class="muted small" style="margin:4px 0 10px">每題看<b>中文</b>，同一題裡選出<b>日文</b>和它的<b>讀音</b>。全部寫完交卷才看分數。</p><div id="wkinds" class="hide"></div>
+        <div id="wmode" class="hide"></div>
+        <div class="field"><span class="lab">題數</span><div class="range"><b>每次 50 題</b><input type="hidden" id="wnum" value="50"><span class="muted small" id="wavail"></span></div></div>
+        <button class="go" id="wstart">開始考單字</button>
+      </div>
       </div>
       <div>
         <div class="panel">
@@ -5114,6 +5125,12 @@ TW.forEach((x,i)=>{
   if(x.j&&x.j!==r)ALL.push(Object.assign({},base,{id:id+":r",ask:"讀音是？",jp:w,ans:r,gen:()=>nbWrong(x,"r")}));
   ALL.push(Object.assign({},base,{id:id+":m",ask:"這個字是什麼意思？",jp:w,sub:x.j?r:"",ans:x.z,gen:()=>nbWrong(x,"m")}));
  });}
+/* 看中文選日文：用「意思」題自動產生反向題 */
+{const have=new Set(ALL.map(q=>q.id));const M=ALL.filter(q=>q.id.endsWith(":m")&&q.jp&&(q.type==="nb"||q.type==="kanji"||q.type==="vocab"));
+ const bySec={};M.forEach(q=>{(bySec[q.sec||("L"+q.l)]=bySec[q.sec||("L"+q.l)]||[]).push(q)});
+ M.forEach(q=>{const id=q.id.slice(0,-2)+":j";if(have.has(id))return;have.add(id);const pool=bySec[q.sec||("L"+q.l)];
+  const gen=()=>{const own=pool.filter(y=>y.ans!==q.ans&&y.jp!==q.jp),oth=M.filter(y=>y.ans!==q.ans&&y.jp!==q.jp);return [...new Set(shuffle(own).concat(shuffle(oth).slice(0,20)).map(y=>y.jp))].slice(0,3)};
+  ALL.push(Object.assign({},q,{id,ask:"日文怎麼說？",jp:undefined,sub:"",zhp:q.ans,ans:q.jp,gen,opts:undefined}))});}
 const BYID=Object.fromEntries(ALL.map(q=>[q.id,q]));
 S.wrong=S.wrong.filter(id=>BYID[id]);S.fav=S.fav.filter(id=>BYID[id]);
 
@@ -5179,6 +5196,42 @@ document.getElementById("start").onclick=()=>{
   p=cfg.mode==="seq"?p.slice().sort((a,b)=>a.l-b.l||a.ord-b.ord).slice(0,n):shuffle(p).slice(0,n);
   startSession(p,cfg.mode);
 };
+/* ---------- 考單字 ---------- */
+const WK=[["m","看日文選意思"],["r","看漢字選讀音"],["j","看中文選日文"]];
+const wcfg={src:"nb:all5",kinds:new Set(["m","r","j"]),mode:"exam"};
+(function(){
+  const sel=document.getElementById("wsrc");
+  const og=(label,opts)=>{const g=document.createElement("optgroup");g.label=label;opts.forEach(([v,t])=>g.appendChild(new Option(t,v)));sel.appendChild(g)};
+  og("日檢單字",[["nb:all5","N5 全部"],["nb:all4","N4 全部"],["nb:all","N5＋N4 全部"]].concat(NB.map(c=>["nb:"+c.id,"分類："+c.t])));
+  const ls=[...new Set(TB.filter(p=>p.l).map(p=>p.l).concat(V.map(v=>v.l)))].sort((a,b)=>a-b);
+  og("課本單字",[["tb:all","第1～"+ls[ls.length-1]+"課 全部"]].concat(ls.map(n=>["tb:"+n,"第"+n+"課"])));
+  const GNm=["","一","二","三","四"];
+  og("小學漢字",[1,2,3,4].filter(g=>SECS.some(x=>x.startsWith("小"+GNm[g]+"・"))).map(g=>["kj:"+g,"小學"+GNm[g]+"年級漢字"]));
+  try{const v=localStorage.getItem("jpquiz-wsrc");if(v&&[...sel.options].some(o=>o.value===v))wcfg.src=v}catch(e){}
+  sel.value=wcfg.src;sel.onchange=()=>{wcfg.src=sel.value;try{localStorage.setItem("jpquiz-wsrc",sel.value)}catch(e){}wAvail()};
+  const ke=document.getElementById("wkinds");WK.forEach(([k,n])=>{const b=document.createElement("button");b.className="chip";b.textContent=n;b.setAttribute("aria-pressed","true");b.onclick=()=>{wcfg.kinds.has(k)?wcfg.kinds.delete(k):wcfg.kinds.add(k);b.setAttribute("aria-pressed",wcfg.kinds.has(k));wAvail()};ke.appendChild(b)});
+  const me=document.getElementById("wmode");[["practice","練習（答完馬上看答案）"],["exam","測驗（交卷才看分數）"]].forEach(([k,n])=>{const b=document.createElement("button");b.className="chip";b.textContent=n;b.setAttribute("aria-pressed",k===wcfg.mode);b.onclick=()=>{wcfg.mode=k;me.querySelectorAll(".chip").forEach(x=>x.setAttribute("aria-pressed",x===b))};me.appendChild(b)});
+  document.getElementById("wstart").onclick=()=>{const p=wPool();if(!p.length)return;
+    const by=new Map();p.forEach(q=>{const k=q.id.slice(0,-2);if(!by.has(k))by.set(k,{});by.get(k)[q.id.slice(-1)]=q});
+    const items=[];for(const k of shuffle([...by.keys()])){const o=by.get(k);
+      if(o.j){const a=inst(o.j);const it={combo:true,q:o.j,opts:a.opts,sel:null,checked:false};if(o.r){it.q2=o.r;it.opts2=shuffle([o.r.ans].concat(simReadings(o.r.ans)));it.sel2=null}items.push(it)}
+      else{const f=o.m||o.r;if(f)items.push(f.id.endsWith(":r")?Object.assign({},f,{gen:()=>simReadings(f.ans)}):f)}
+      if(items.length>=50)break}
+    startSession(items,"exam")};
+})();
+function wPool(){
+  const s=wcfg.src,k=q=>wcfg.kinds.has(q.id.slice(-1));
+  let p;
+  if(s==="nb:all5")p=ALL.filter(q=>q.type==="nb"&&q.nlv===5);
+  else if(s==="nb:all4")p=ALL.filter(q=>q.type==="nb"&&q.nlv===4);
+  else if(s==="nb:all")p=ALL.filter(q=>q.type==="nb");
+  else if(s.startsWith("nb:"))p=ALL.filter(q=>q.type==="nb"&&q.sec===s);
+  else if(s==="tb:all")p=ALL.filter(q=>q.type==="vocab"&&/:(m|r|j)$/.test(q.id)&&q.l!=null);
+  else if(s.startsWith("tb:"))p=ALL.filter(q=>q.type==="vocab"&&/:(m|r|j)$/.test(q.id)&&q.l===+s.slice(3));
+  else if(s.startsWith("kj:")){const g=["","一","二","三","四"][+s.slice(3)];p=ALL.filter(q=>q.type==="kanji"&&(q.sec||"").startsWith("小"+g+"・"))}
+  return (p||[]).filter(k);
+}
+function wAvail(){const n=new Set(wPool().map(q=>q.id.slice(0,-2))).size;const e=document.getElementById("wavail");if(e)e.textContent=`這個範圍有 ${n} 個字`;const b=document.getElementById("wstart");if(b){b.disabled=!n;b.textContent=n?"開始考單字":"沒有符合的題目"}}
 function renderHome(){
   const ans=Object.keys(S.q).filter(id=>BYID[id]);
   let c=0,w=0;ans.forEach(id=>{c+=S.q[id].c;w+=S.q[id].w});
@@ -5191,7 +5244,7 @@ function renderHome(){
     const pct=cc+ww?Math.round(cc/(cc+ww)*100):0;
     return `<div class="les" title="${esc(L.goals.join("、"))}"><span>第${L.n}課</span><span class="meter"><i style="width:${pct}%"></i></span><span class="pct">${cc+ww?pct+"%":"—"}</span></div>`;
   }).join("")+`<p class="muted small" style="margin:10px 0 0">百分比是該課答對率。游標移到課上可看學習目標。</p>`;
-  updAvail();updTab();
+  updAvail();wAvail();updTab();
 }
 const qEl=document.getElementById("q"),hitsEl=document.getElementById("hits");
 function qText(q){return q.gq||q.jp||q.zhp||q.ask}
@@ -5230,7 +5283,7 @@ function answerBook(p,subs){
 const isOK=x=>x.grp?x.subs.every(s=>s.sel!=null&&s.opts[s.sel]===s.q.ans):(x.sel!=null&&x.opts[x.sel]===x.q.ans);
 function startSession(qs,mode){
   const items=[],gm=new Map();
-  qs.forEach(q=>{if(q.passage){if(!gm.has(q.passage.id)){const g={grp:true,passage:q.passage,q,opts:[],checked:false,subs:ALL.filter(x=>x.passage===q.passage).sort((a,b)=>a.qi-b.qi).map(inst)};gm.set(q.passage.id,g);items.push(g)}}else items.push(inst(q))});
+  qs.forEach(q=>{if(q.combo){items.push(q);return}if(q.passage){if(!gm.has(q.passage.id)){const g={grp:true,passage:q.passage,q,opts:[],checked:false,subs:ALL.filter(x=>x.passage===q.passage).sort((a,b)=>a.qi-b.qi).map(inst)};gm.set(q.passage.id,g);items.push(g)}}else items.push(inst(q))});
   sess={mode,items,cur:0,t0:Date.now(),limit:mode==="exam"?qs.length*60:0,over:false};
   clearInterval(tick);tick=setInterval(updTimer,1000);
   show("quiz");
@@ -5250,7 +5303,12 @@ function renderQuiz(){
   const it=sess.items[sess.cur],q=it.q,exam=sess.mode==="exam",n=sess.items.length;
   const mName=MODES.find(m=>m[0]===sess.mode)[1];
   let body="";
-  if(it.grp){
+  if(it.combo){
+    const oset=(arr,sel,attr,ansv)=>`<div class="opts">${arr.map((o,i)=>{let c="opt";if(sel===i)c+=" sel";if(it.checked&&!exam){if(o===ansv)c+=" right";else if(sel===i)c+=" wrong"}return `<button class="${c}" ${attr}="${i}"><span class="k">${i+1}</span><span${la(o)}>${esc(o)}</span></button>`}).join("")}</div>`;
+    body+=`<div class="ask">選出日文${it.q2?"，再選讀音":""}</div><div class="prompt big">${esc(it.q.zhp)}</div>
+      <div class="lab" style="margin:8px 0 4px">① 日文</div>${oset(it.opts,it.sel,"data-ca",it.q.ans)}
+      ${it.q2?`<div class="lab" style="margin:14px 0 4px">② 讀音</div>${oset(it.opts2,it.sel2,"data-cb",it.q2.ans)}`:""}`;
+  }else if(it.grp){
     const p=it.passage,showA=it.checked&&!exam;
     body+=`<div class="ptools"><button class="ghost small" id="rb">${ruby_on||showA?"隱藏讀音":"顯示讀音"}</button><button class="ghost small" id="ps">🔊 朗讀文章</button></div>
       <div class="passage ${ruby_on||showA?"":"noruby"}" lang="ja"><b>${esc(p.title)}</b><br>${showA?annot(p):ruby(p.text)}</div>
@@ -5266,11 +5324,11 @@ function renderQuiz(){
   }else if(q.zhp){
     body+=`<div class="ask">${esc(q.ask)}</div><div class="prompt big">${esc(q.zhp)}</div>`;
   }else{
-    body+=`<div class="ask">${esc(q.ask)}</div><div class="prompt big" lang="ja">${esc(q.jp)}<button class="say" id="say" aria-label="發音">🔊</button></div>`+
+    body+=`<div class="ask">${esc(q.ask)}</div><div class="prompt big" lang="ja">${esc(q.jp)}${q.id.endsWith(":r")&&!it.checked?"":`<button class="say" id="say" aria-label="發音">🔊</button>`}</div>`+
       (it.checked&&q.sub?`<div class="subp" lang="ja">${esc(q.sub)}</div>`:"");
   }
-  const showAns=it.checked&&!exam&&!it.grp;
-  if(!it.grp)body+=`<div class="opts">${it.opts.map((o,i)=>{
+  const showAns=it.checked&&!exam&&!it.grp&&!it.combo;
+  if(!it.grp&&!it.combo)body+=`<div class="opts">${it.opts.map((o,i)=>{
     let c="opt";if(it.sel===i)c+=" sel";
     if(showAns){if(o===q.ans)c+=" right";else if(it.sel===i)c+=" wrong"}
     return `<button class="${c}" data-o="${i}"><span class="k">${i+1}</span><span${la(o)}>${esc(o)}</span></button>`}).join("")}</div>`;
@@ -5280,7 +5338,7 @@ function renderQuiz(){
   }
   const last=sess.cur===n-1;
   const dots=sess.items.map((x,i)=>{let c=i===sess.cur?"cur":"";
-    if(exam){if(x.grp?x.subs.every(s=>s.sel!=null):x.sel!=null)c+=" done"}else if(x.checked)c+=isOK(x)?" ok":" no";
+    if(exam){if(x.combo?(x.sel!=null&&(!x.q2||x.sel2!=null)):x.grp?x.subs.every(s=>s.sel!=null):x.sel!=null)c+=" done"}else if(x.checked)c+=isOK(x)?" ok":" no";
     return `<button class="${c}" data-d="${i}">${i+1}</button>`}).join("");
   root.innerHTML=`<div class="qbar"><div class="left"><span class="count">第 ${sess.cur+1} / ${n} 題</span><span class="muted">${mName}</span></div>
     <div class="left"><span class="timer" id="timer"></span><button class="ghost small" id="quit">結束本輪</button></div></div>
@@ -5292,6 +5350,8 @@ function renderQuiz(){
     <div class="dots">${dots}</div>${exam?`<p class="muted small" style="margin:12px 0 0">模擬考模式：按「完成測驗」後才會公布分數和答案。可以隨時點上面的題號跳回去改。</p>`:""}</div>`;
   updTimer();
   root.querySelectorAll("[data-o]").forEach(b=>b.onclick=()=>choose(+b.dataset.o));
+  root.querySelectorAll("[data-ca]").forEach(b=>b.onclick=()=>{it.sel=+b.dataset.ca;const y=window.scrollY;renderQuiz();window.scrollTo(0,y)});
+  root.querySelectorAll("[data-cb]").forEach(b=>b.onclick=()=>{it.sel2=+b.dataset.cb;const y=window.scrollY;renderQuiz();window.scrollTo(0,y)});
   root.querySelectorAll("[data-gs]").forEach(b=>b.onclick=()=>{if(it.checked&&!exam)return;it.subs[+b.dataset.gs].sel=+b.dataset.go;const y=window.scrollY;renderQuiz();window.scrollTo(0,y)});
   root.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>speak(b.dataset.say));
   {const e=document.getElementById("gchk");if(e)e.onclick=()=>{const n=it.subs.filter(s=>s.sel==null).length;if(n&&!confirm(`還有 ${n} 題沒作答，確定要對答案嗎？`))return;it.checked=true;it.subs.forEach(s=>rec(s.q,s.sel!=null&&s.opts[s.sel]===s.q.ans));updTab();const y=window.scrollY;renderQuiz();window.scrollTo(0,y);const ab=document.querySelector(".abook");if(ab)ab.scrollIntoView({behavior:"smooth",block:"start"})}}
@@ -5300,7 +5360,7 @@ function renderQuiz(){
   bindLearn(root);
   on("prev",()=>{sess.cur--;renderQuiz()});
   on("next",()=>{sess.cur++;renderQuiz()});
-  on("fin",()=>{if(exam&&sess.items.some(x=>x.sel==null)&&!confirm("還有題目沒作答，確定要交卷嗎？"))return;finish()});
+  on("fin",()=>{if(exam&&sess.items.some(x=>x.combo?(x.sel==null||(x.q2&&x.sel2==null)):x.grp?x.subs.some(z=>z.sel==null):x.sel==null)&&!confirm("還有題目沒作答，確定要交卷嗎？"))return;finish()});
   on("quit",()=>{if(confirm("確定要結束這一輪嗎？已作答的紀錄會保留。")){if(exam)finish();else{sess.over=true;clearInterval(tick);renderQuiz()}}});
   on("fav",()=>{toggleFav(q.id);renderQuiz();updTab()});
   on("say",()=>speak(q.say));
@@ -5320,13 +5380,13 @@ function choose(i){
 function finish(){
   if(!sess||sess.over)return;
   clearInterval(tick);
-  if(sess.mode==="exam")sess.items.forEach(it=>{it.checked=true;if(it.grp)it.subs.forEach(s=>rec(s.q,s.sel!=null&&s.opts[s.sel]===s.q.ans));else if(it.sel!=null)rec(it.q,it.opts[it.sel]===it.q.ans);else rec(it.q,false)});
+  if(sess.mode==="exam")sess.items.forEach(it=>{it.checked=true;if(it.combo){rec(it.q,it.sel!=null&&it.opts[it.sel]===it.q.ans);if(it.q2)rec(it.q2,it.sel2!=null&&it.opts2[it.sel2]===it.q2.ans)}else if(it.grp)it.subs.forEach(s=>rec(s.q,s.sel!=null&&s.opts[s.sel]===s.q.ans));else if(it.sel!=null)rec(it.q,it.opts[it.sel]===it.q.ans);else rec(it.q,false)});
   sess.over=true;sess.t1=Date.now();
   if(view!=="quiz")show("quiz");else renderQuiz();
 }
 function renderResult(){
   const root=document.getElementById("v-quiz");
-  const done=sess.items.filter(x=>x.checked).flatMap(x=>x.grp?x.subs:[x]);
+  const done=sess.items.filter(x=>x.checked).flatMap(x=>x.combo?[{q:x.q,opts:x.opts,sel:x.sel,checked:true}].concat(x.q2?[{q:x.q2,opts:x.opts2,sel:x.sel2,checked:true}]:[]):x.grp?x.subs:[x]);
   const ok=done.filter(x=>x.sel!=null&&x.opts[x.sel]===x.q.ans).length;
   const bad=done.filter(x=>!(x.sel!=null&&x.opts[x.sel]===x.q.ans));
   const pct=done.length?Math.round(ok/done.length*100):0;
