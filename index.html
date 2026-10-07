@@ -5729,7 +5729,7 @@ function renderNB(nav){
   const say=t=>`<button class="say" data-say="${esc(t)}" aria-label="發音">🔊</button>`;
   const body=c.groups.map(g=>{const ws=g.w.filter(inLv);if(!ws.length)return "";
     return `<div class="nbg"><h3>${esc(g.t)}</h3>${g.n?`<div class="knote">${esc(g.n)}</div>`:""}<div class="nbgrid">${ws.map(x=>{const r=nbPlain(x.k);
-      return `<div class="nbw"><div class="nbh"><span class="nbk" lang="ja">${nbMark(x.k)}</span>${x.j?`<span class="nbj" lang="ja">（${esc(x.j)}）</span>`:""}${say(r.replace(/^〜/,""))}<span class="nbz">${esc(x.z)}</span>${lvF==="all"&&x.lv===4?`<span class="nblv">N4</span>`:""}</div>
+      return `<div class="nbw"><div class="nbh">${x.j?`<span class="nbk" lang="ja">${esc(x.j)}</span><span class="nbj" lang="ja">（${nbMark(x.k)}）</span>`:`<span class="nbk" lang="ja">${nbMark(x.k)}</span>`}${say(r.replace(/^〜/,""))}<span class="nbz">${esc(x.z)}</span>${lvF==="all"&&x.lv===4?`<span class="nblv">N4</span>`:""}</div>
         ${x.e?sentBlock(x.e,x.ez,(x.j?x.j.replace(/[（(].*$/,"")+"|":"")+r.split("／")[0].replace(/^〜/,""),1):""}</div>`}).join("")}</div></div>`}).join("");
   const total=cnt(c);
   root.querySelector("#nbmain").innerHTML=`<div class="panel nbpaper ${S.nbbrief?"nbbrief":""} ${hideRd?"hr":""}"><div class="nbsheet" style="padding:4px 6px">
