@@ -114,7 +114,18 @@ select{flex:1}
 .ans{color:var(--matcha);font-weight:700}
 .empty{padding:30px 10px;text-align:center;color:var(--soft)}
 .hide{display:none!important}
-#wtest{margin-top:16px}
+.grid2>*,#v-learn>div>*,.kwrap>*{min-width:0}
+select{max-width:100%}
+.range{min-width:0}.range select{min-width:0;flex:1 1 0}
+header nav{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+header nav button{white-space:nowrap;flex:none}
+mark.hl{background:linear-gradient(transparent 50%,color-mix(in srgb,#F2A7B5 60%,transparent) 50%);color:inherit;padding:0 1px}
+.note mark.y{background:linear-gradient(transparent 45%,color-mix(in srgb,#E9D44C 55%,transparent) 45%);padding:0 1px}
+.sumbox{border:2px solid color-mix(in srgb,var(--sakura) 40%,var(--line));border-radius:14px;padding:12px 16px;background:var(--card);margin-bottom:16px}
+.sumbox h3{margin:0 0 8px;font-size:1.05rem}
+.sumbox ol{margin:0;padding-left:1.4em}.sumbox li{padding:4px 0}
+.sumbox .sp{font-size:1.05rem;margin-left:6px}
+#gtest,#rtest{margin-top:16px}
 .nbpaper{--grid:color-mix(in srgb,var(--line) 55%,transparent);background-color:var(--card);background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:22px 22px;background-position:-1px -1px}
 .nbpaper .nbsheet{background:color-mix(in srgb,var(--card) 82%,transparent);border-radius:12px}
 .nbg{margin:18px 0 6px}
@@ -293,8 +304,8 @@ th{background:var(--mist);font-weight:700}
     <div class="stats" id="stats"></div>
     <div class="grid2">
       <div>
-      <div class="panel">
-        <h2>建立練習</h2>
+      <div class="panel hide" id="mixtest">
+        <h2>總測驗</h2><p class="muted small" style="margin:-6px 0 10px">單字、漢字、動詞變化、文法、閱讀可以混在一起考。</p>
         <div class="field">
           <span class="lab">範圍</span>
           <div class="range"><select id="from"></select><span class="muted">到</span><select id="to"></select></div>
@@ -320,6 +331,20 @@ th{background:var(--mist);font-weight:700}
         <div id="wmode" class="hide"></div>
         <div class="field"><span class="lab">題數</span><div class="range"><b>每次 50 題</b><input type="hidden" id="wnum" value="50"><span class="muted small" id="wavail"></span></div></div>
         <button class="go" id="wstart">開始考單字</button>
+      </div>
+      <div class="panel" id="gtest">
+        <h2>考文法</h2>
+        <div class="field"><label for="gsrc" class="lab">範圍</label><select id="gsrc" style="width:100%"></select></div>
+        <p class="muted small" style="margin:4px 0 10px">文法填空和動詞變化一起考，全部寫完交卷才看分數和解析。</p>
+        <div class="field"><span class="lab">題數</span><div class="range"><b>每次 30 題</b><span class="muted small" id="gavail"></span></div></div>
+        <button class="go" id="gstart">開始考文法</button>
+      </div>
+      <div class="panel" id="rtest">
+        <h2>考閱讀</h2>
+        <div class="field"><span class="lab">範圍</span><div class="range"><select id="rfrom"></select><span class="muted">到</span><select id="rto"></select></div></div>
+        <p class="muted small" style="margin:4px 0 10px">像多益一樣：一篇文章和它的題目放在一起，寫完按「對答案」，下面會出現解答本（每題解析、全文翻譯、重點單字、文法）。</p>
+        <div class="field"><span class="lab">篇數</span><div class="range"><b>每次 3 篇</b><span class="muted small" id="ravail"></span></div></div>
+        <button class="go" id="rstart">開始考閱讀</button>
       </div>
       </div>
       <div>
@@ -5219,6 +5244,30 @@ const wcfg={src:"nb:all5",kinds:new Set(["m","r","j"]),mode:"exam"};
       if(items.length>=50)break}
     startSession(items,"exam")};
 })();
+(function(){
+  const GQ=ALL.filter(q=>q.type==="grammar"||q.type==="conj");
+  const ls=[...new Set(GQ.map(q=>q.l))].sort((a,b)=>a-b);const last=ls[ls.length-1];
+  const sel=document.getElementById("gsrc");
+  const og=(label,opts)=>{const g=document.createElement("optgroup");g.label=label;opts.forEach(([v,t])=>g.appendChild(new Option(t,v)));sel.appendChild(g)};
+  og("累積範圍",ls.slice(1).map(n=>["upto:"+n,"第1～"+n+"課"]).reverse());
+  og("單一課",ls.map(n=>["one:"+n,"第"+n+"課　"+((B.lessons.find(L=>L.n===n)||{}).t||"")]));
+  let v="upto:"+last;try{const x=localStorage.getItem("jpquiz-gsrc");if(x&&[...sel.options].some(o=>o.value===x))v=x}catch(e){}sel.value=v;
+  const pool=()=>{const [k,n]=sel.value.split(":");return GQ.filter(q=>k==="one"?q.l===+n:q.l<=+n)};
+  const upd=()=>{const n=pool().length;document.getElementById("gavail").textContent=`（這個範圍有 ${n} 題${n<30?"，會全部出完":""}）`;const b=document.getElementById("gstart");b.disabled=!n};
+  sel.onchange=()=>{try{localStorage.setItem("jpquiz-gsrc",sel.value)}catch(e){}upd()};upd();
+  document.getElementById("gstart").onclick=()=>{const p=pool();if(!p.length)return;startSession(shuffle(p).slice(0,30),"exam")};
+})();
+(function(){
+  const ls=[...new Set(B.reading.map(p=>p.l))].sort((a,b)=>a-b);
+  const f=document.getElementById("rfrom"),t=document.getElementById("rto");
+  ls.forEach(n=>{const L=B.lessons.find(x=>x.n===n);const tx="第"+n+"課"+(L?" "+L.t:"");f.add(new Option(tx,n));t.add(new Option(tx,n))});
+  f.value=ls[0];t.value=ls[ls.length-1];
+  const ps=()=>B.reading.filter(p=>p.l>=+f.value&&p.l<=+t.value);
+  const upd=()=>{const n=ps().length;document.getElementById("ravail").textContent=`（這個範圍有 ${n} 篇${n<3?"，會全部出完":""}）`;document.getElementById("rstart").disabled=!n};
+  f.onchange=()=>{if(+f.value>+t.value)t.value=f.value;upd()};t.onchange=()=>{if(+t.value<+f.value)f.value=t.value;upd()};upd();
+  document.getElementById("rstart").onclick=()=>{const pick=shuffle(ps()).slice(0,3).sort((a,b)=>a.l-b.l);if(!pick.length)return;
+    startSession(pick.flatMap(p=>ALL.filter(q=>q.passage===p).sort((a,b)=>a.qi-b.qi)),"practice")};
+})();
 function wPool(){
   const s=wcfg.src,k=q=>wcfg.kinds.has(q.id.slice(-1));
   let p;
@@ -5414,18 +5463,28 @@ const TAGS=["は","が","を","に","で","へ","と","の","も","から","よ�
 let lv={mode:"lesson",l:1,tag:null};
 function bindLearn(root){root.querySelectorAll("[data-learn]").forEach(b=>b.onclick=()=>{lv={mode:"lesson",l:+b.dataset.learn,tag:null};show("learn")})}
 function cell(t){return `<td${la(t)}>${esc(t)}</td>`}
+const PH=new Set(["A","B","名詞","動詞","人","時間","地點","交通工具","交通で","受詞","副詞","理由","結果","物","數字","量詞","期間","次數","形容詞","形容詞否定","動作1","動作2","ます形去ます","て形","い形","な形・名詞","動作1（て形）"]);
+function patToks(pat){if(!pat)return [];return [...new Set(pat.split(/[\s／＋→、,（）()]+/).map(t=>t.replace(/[～〜]/g,"").replace(/：.*$/,"")).filter(t=>t&&!PH.has(t)&&/[\u3040-\u30ff]/.test(t)&&!/^(い形|な形)/.test(t)))].sort((a,b)=>b.length-a.length)}
+function hlJP(jp,toks){if(!toks.length)return esc(jp);
+  return jp.split(/(\s+)/).map(seg=>{if(/^\s+$/.test(seg))return seg;const m=seg.match(/^(.*?)([。、？！?!」]*)$/);let body=m[1],tail=m[2];
+    let pre="",mid=body,post="";const e=toks.find(t=>body.endsWith(t)&&body.length>=t.length);
+    if(e){mid=body.slice(0,body.length-e.length);post=e}
+    const st=toks.find(t=>mid.startsWith(t)&&(mid.length===t.length||t.length>=2));if(st){pre=st;mid=mid.slice(st.length)}
+    return (pre?`<mark class="hl">${esc(pre)}</mark>`:"")+esc(mid)+(post?`<mark class="hl">${esc(post)}</mark>`:"")+esc(tail)}).join("")}
+const hlText=t=>esc(t).replace(/「([^」]{1,20})」/g,'「<mark class="y">$1</mark>」');
 function noteHTML(n,i,withLesson){
   let h=`<div class="panel note" id="n${i}"><h3>${withLesson?`<small>第${n.l}課</small>`:""}${esc(n.t)}</h3>`;
-  if(n.pat)h+=`<div class="pat" lang="ja">${esc(n.pat)}</div>`;
-  h+=`<div>${esc(n.exp)}</div>`;
-  if(n.ex&&n.ex.length)h+=exList(n.ex);
+  const tk=patToks(n.pat);
+  if(n.pat)h+=`<div class="pat" lang="ja">${hlJP(n.pat,tk)}</div>`;
+  h+=`<div>${hlText(n.exp)}</div>`;
+  if(n.ex&&n.ex.length)h+=exList(n.ex,tk);
   if(n.tbl)h+=`<div class="tblw"><table><thead><tr>${n.tbl[0].map(x=>`<th${la(x)}>${esc(x)}</th>`).join("")}</tr></thead><tbody>${n.tbl.slice(1).map(r=>`<tr>${r.map(cell).join("")}</tr>`).join("")}</tbody></table></div>`;
-  if(n.tip)h+=`<div class="tip"><b>注意</b>　${esc(n.tip)}</div>`;
-  if(n.ext)h+=`<div class="extb"><h4>延伸學習：${esc(n.ext.t)}</h4><div>${esc(n.ext.exp)}</div>${n.ext.ex?exList(n.ext.ex):""}</div>`;
+  if(n.tip)h+=`<div class="tip"><b>⚠ 注意</b>　${hlText(n.tip)}</div>`;
+  if(n.ext)h+=`<div class="extb"><h4>延伸學習：${esc(n.ext.t)}</h4><div>${hlText(n.ext.exp)}</div>${n.ext.ex?exList(n.ext.ex,tk):""}</div>`;
   if(withLesson)h+=`<div style="margin-top:10px"><button class="linkbtn" data-learn="${n.l}">看第${n.l}課完整內容</button></div>`;
   return h+`</div>`;
 }
-function exList(ex){return `<ul class="ex">${ex.map(e=>`<li><button class="say" data-say="${esc(e[0])}" aria-label="發音">🔊</button><div><div class="jp" lang="ja">${esc(e[0])}</div><div class="zh">${esc(e[1])}</div></div></li>`).join("")}</ul>`}
+function exList(ex,tk){return `<ul class="ex">${ex.map(e=>`<li><button class="say" data-say="${esc(e[0])}" aria-label="發音">🔊</button><div><div class="jp" lang="ja">${hlJP(e[0],tk||[])}</div><div class="zh">${esc(e[1])}</div></div></li>`).join("")}</ul>`}
 function renderLearn(){
   const root=document.getElementById("v-learn");
   const side=`<aside class="panel side"><div class="lab">課程</div><div class="lessons">${B.lessons.map(L=>`<button class="${lv.mode==="lesson"&&lv.l===L.n?"on":""}" data-l="${L.n}"><span>${L.n}</span><b>${esc(L.t)}</b></button>`).join("")}</div>
@@ -5437,6 +5496,7 @@ function renderLearn(){
   }else{
     const L=B.lessons.find(x=>x.n===lv.l),ns=NOTES.filter(n=>n.l===lv.l),tp=TB.find(p=>p.l===lv.l),vs=tp?tp.words.map(w=>({kanji:tbHead(w),kana:w[0],mean:w[2]})):V.filter(v=>v.l===lv.l);
     main=`<div class="lhead"><h2>第${L.n}課　${esc(L.t)}</h2><div class="toc">${ns.map((n,i)=>`<a href="#n${i}">${esc(n.t)}</a>`).join("")}${vs.length?`<a href="#vocab">本課單字</a>`:""}</div></div>`+
+      (ns.length?`<div class="sumbox"><h3>📌 本課重點（考前看這裡就好）</h3><ol>${ns.map(n=>`<li><b>${esc(n.t)}</b>${n.pat?`<span class="sp" lang="ja">${hlJP(n.pat,patToks(n.pat))}</span>`:""}<div class="muted small">${hlText((n.exp.match(/^[^。]*。?/)||[n.exp])[0])}</div></li>`).join("")}</ol></div>`:"")+
       (ns.length?ns.map((n,i)=>noteHTML(n,i,false)).join(""):`<div class="panel empty">這課還沒有文法說明。</div>`)+
       (vs.length?`<div class="panel note" id="vocab"><h3>本課單字${tp?"<small>（課本）</small>":"<small>（依主題補充）</small>"}</h3><div class="tblw"><table><thead><tr><th>漢字</th><th>假名</th><th>意思</th><th></th></tr></thead><tbody>${vs.map(v=>`<tr><td lang="ja">${esc(v.kanji)}</td><td lang="ja">${esc(v.kana)}</td><td>${esc(v.mean)}</td><td><button class="say" data-say="${esc(v.kana)}" aria-label="發音">🔊</button></td></tr>`).join("")}</tbody></table></div></div>`:"")+
       `<div class="panel"><h3 style="margin:0 0 10px">讀完了？馬上練習</h3><div class="lbtns"><button class="primary" id="pg">練習本課文法</button><button class="ghost" id="pa">練習本課全部題型</button></div></div>
