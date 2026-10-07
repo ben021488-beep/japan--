@@ -281,7 +281,7 @@ th{background:var(--mist);font-weight:700}
       <button role="tab" data-v="home" aria-selected="true">控制面板</button>
       <button role="tab" data-v="learn" aria-selected="false">學習</button>
       <button role="tab" data-v="nb" aria-selected="false">分類筆記</button>
-      <button role="tab" data-v="kanji" aria-selected="false">單字書</button>
+      <button role="tab" data-v="kanji" aria-selected="false">課本與漢字</button>
       <button role="tab" data-v="paper" aria-selected="false">考卷</button>
       <button role="tab" data-v="quiz" aria-selected="false">當前測驗</button>
       <button role="tab" data-v="review" aria-selected="false" id="tabReview">錯題與收藏</button>
@@ -5031,7 +5031,10 @@ let EXTRA=[];const SETS=B.sets||[];
   const INFO={};const addI=(w,s,z,n)=>{if(w&&s&&!INFO[w])INFO[w]=[s,z||"",n||""]};
   KJ.forEach(k=>{if(k.w&&k.s)addI(k.w[0],k.s[0],k.s[1],k.n)});
   Object.values(TH.topics||{}).forEach(o=>o.words.forEach(w=>addI(w[0],w[4],w[5],w[6])));
-  SETS.forEach(st=>{st.rows=[];const ref={k:"一起記："+st.title,sec:st.sec};st.words.forEach(w=>{if(own.has(w[0]))return;own.set(w[0],ref);const f=w[3]?[w[3],w[4]||""]:(INFO[w[0]]||["","",""]);st.rows.push([w[0],w[1],w[2],f[0],f[1],""])})});
+  const INNB=new Set();(window.NB||[]).forEach(c=>c.groups.forEach(g=>g.w.forEach(x=>{const r=x.k.replace(/[{}<>]/g,"");INNB.add((x.j||r).replace(/^[〜～]/,""));if(!x.j)INNB.add(r.replace(/^[〜～]/,""))})));
+  const inNB=w=>INNB.has(String(w).replace(/^[〜～]/,""));let nbSkip=0;
+  SETS.forEach(st=>{st.rows=[];const ref={k:"一起記："+st.title,sec:st.sec};st.words.forEach(w=>{if(own.has(w[0]))return;own.set(w[0],ref);if(inNB(w[0])){nbSkip++;return}const f=w[3]?[w[3],w[4]||""]:(INFO[w[0]]||["","",""]);st.rows.push([w[0],w[1],w[2],f[0],f[1],""])})});
+  const SETLEFT=[];SETS.forEach(st=>{if(st.rows.length<st.words.length*0.6){SETLEFT.push(...st.rows);st.rows=[]}});
   const OLD=KJ.filter(k=>!k.grade);
   G.forEach(k=>{if(!own.has(k.w[0])){own.set(k.w[0],k);k._main=true}});
   G.forEach(k=>{
@@ -5044,9 +5047,10 @@ let EXTRA=[];const SETS=B.sets||[];
   OLD.forEach(k=>{sup.push([k.w[0],k.w[1],k.w[2],k.s?k.s[0]:"",k.s?k.s[1]:"",k.n||""]);(k.rel||[]).forEach(r=>sup.push([r[0],r[1],r[2],"","",""]))});
   TH.outline.flatMap(c=>c[1]).forEach(t=>{const o=TH.topics[t];if(o)o.words.forEach(w=>sup.push([w[0],w[1],w[2],w[4]||"",w[5]||"",w[6]||""]))});
   const byK={};G.forEach(k=>{if(!byK[k.k])byK[k.k]=k});
-  sup.forEach(x=>{if(own.has(x[0]))return;own.set(x[0],true);const c=[...x[0]].find(ch=>byK[ch]);if(c){const k=byK[c];(k.sup=k.sup||[]).push(x)}else EXTRA.push(x)});
+  sup.forEach(x=>{if(own.has(x[0]))return;own.set(x[0],true);if(inNB(x[0])){nbSkip++;return}const c=[...x[0]].find(ch=>byK[ch]);if(c){const k=byK[c];(k.sup=k.sup||[]).push(x)}else EXTRA.push(x)});
+  SETLEFT.forEach(x=>{const c=[...x[0]].find(ch=>byK[ch]);if(c){const k=byK[c];(k.sup=k.sup||[]).push(x)}else EXTRA.push(x)});
   G.forEach(k=>{if(!k.w&&k.sup&&k.sup.length){const x=k.sup.shift();k.w=[x[0],x[1],x[2]];k.s=x[3]?[x[3],x[4]]:null;k.n=x[5]||null;k._promoted=true}});
-  KJ=G;
+  KJ=G;window.NBSKIP=nbSkip;
   TH.topics={};TH.outline=[];
 })();
 const SECS=[...new Set(KJ.map(k=>k.sec))].concat(EXTRA.length?["x:補充"]:[]);
@@ -5394,8 +5398,8 @@ function renderLearn(){
 /* ---------- 單字書 ---------- */
 const TFILLED=Object.keys(TH.topics).filter(t=>TH.topics[t].words.length);
 const PAGES_OK=x=>x.startsWith("t:")?TFILLED.includes(x.slice(2)):x.startsWith("b:")?TB.some(p=>p.key===x):SECS.includes(x);
-let ksec=(S.ksec&&PAGES_OK(S.ksec))?S.ksec:(TFILLED.length?"t:"+TFILLED[0]:SECS[0]),hideRd=false;
-const PAGES=TH.outline.flatMap(c=>c[1]).filter(t=>TFILLED.includes(t)).map(t=>"t:"+t).concat(SECS).concat(TB.map(p=>p.key));
+let ksec=(S.ksec&&PAGES_OK(S.ksec))?S.ksec:(TB[0]?TB[0].key:SECS[0]),hideRd=false;
+const PAGES=TB.map(p=>p.key).concat(SECS);
 function kNm(x){if(x==="x:補充")return "補充單字";if(x.startsWith("b:")){const p=TB.find(q=>q.key===x);return p?p.title:x.slice(2)}return x.replace(/^t:/,"").replace(/^小[一二三四五六]・/,"").replace(/^課本・/,"")}
 function renderKanji(nav){
   const root=document.getElementById("v-kanji");
@@ -5406,7 +5410,7 @@ function renderKanji(nav){
   /* 目錄只建立一次，之後不重畫，捲動位置就不會跳走 */
   if(!root.querySelector(".kwrap")){
   const side=`<aside class="panel side toc2">${TFILLED.length?'<div class="lab">主題單字</div>':""}${TH.outline.map(c=>`<div class="cat">${esc(c[0])}</div>${c[1].map(t=>TFILLED.includes(t)?btn("t:"+t):"").join("")}`).join("")}
-    ${[...[1,2,3,4,5,6].map(g=>[`小學${GN[g]}年級漢字`,SECS.filter(x=>x.startsWith(`小${GN[g]}・`))]),["補充單字（沒有小學漢字的字）",SECS.filter(x=>x==="x:補充")],["課本單字",TB.filter(p=>p.l).map(p=>p.key)],["App 單字",TB.filter(p=>!p.l).map(p=>p.key)]].filter(g=>g[1].length).map(g=>`<div class="lab" style="margin-top:14px">${g[0]}</div>${g[1].map(btn).join("")}`).join("")}</aside>`;
+    ${[["課本單字",TB.filter(p=>p.l).map(p=>p.key)],["App 單字",TB.filter(p=>!p.l).map(p=>p.key)],...[1,2,3,4,5,6].map(g=>[`小學${GN[g]}年級漢字`,SECS.filter(x=>x.startsWith(`小${GN[g]}・`))]),["補充單字（沒有小學漢字的字）",SECS.filter(x=>x==="x:補充")]].filter(g=>g[1].length).map(g=>`<div class="lab" style="margin-top:14px">${g[0]}</div>${g[1].map(btn).join("")}`).join("")}</aside>`;
     root.innerHTML=`<div class="kwrap">${side}<div id="kmain"></div></div>`;
     root.querySelector(".side").addEventListener("click",e=>{const b=e.target.closest("[data-sec]");if(!b)return;ksec=b.dataset.sec;renderKanji(true)});
   }
