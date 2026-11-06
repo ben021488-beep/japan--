@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>日文→中文 翻譯外掛 示範</title>
+<style>body{font-family:"Noto Sans TC",sans-serif;max-width:720px;margin:40px auto;padding:0 18px;line-height:1.8;color:#3B3530;background:#F6F1EA}</style>
+</head>
+<body>
+<h1>翻譯外掛示範</h1>
+<p>① 用滑鼠選取下面的日文，會出現「翻譯」按鈕。② 或點右下角的「譯」按鈕貼上日文。</p>
+<blockquote lang="ja">
+  先日はお忙しいところ、わざわざお越しいただき誠にありがとうございました。<br>
+  ご提案いただいた件につきましては、社内で検討のうえ、改めてご連絡させていただきます。
+</blockquote>
+<p lang="ja">雨が降りそうだから、傘を持って行ったほうがいいよ。</p>
+
+<!-- 只要這一行就能裝到任何網站 -->
+<script src="jp-zh-translator.js" data-endpoint="http://localhost:8787/api/translate" data-target="zh-Hant" defer></script>
+</body>
+</html>

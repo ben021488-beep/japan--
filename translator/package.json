@@ -1,0 +1,14 @@
+{
+  "name": "jp-zh-translator",
+  "version": "1.0.0",
+  "description": "可嵌入網站的日文→中文精準翻譯外掛（Claude API）",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0"
+  }
+}
