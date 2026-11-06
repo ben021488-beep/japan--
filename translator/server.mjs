@@ -248,9 +248,13 @@ const server = http.createServer(async (req, res) => {
       "javascript:(function(){var t=String(getSelection()||'').trim();" +
       "function go(){JpZhTranslator.open(t,!!t)}" +
       "if(window.JpZhTranslator)return go();" +
+      "var d=document.createElement('div');d.textContent='日中翻譯載入中…';" +
+      "d.style.cssText='position:fixed;right:16px;bottom:16px;z-index:2147483647;background:#9C6B48;color:#fff;padding:10px 14px;border-radius:10px;font:15px sans-serif';" +
+      "document.body.appendChild(d);" +
       "var s=document.createElement('script');" +
       `s.src='${base}/jp-zh-translator.js?v='+Date.now();` +
-      "s.onload=go;s.onerror=function(){alert('翻譯工具載入失敗：這個網站不允許外掛')};" +
+      "s.onload=function(){d.remove();go()};" +
+      "s.onerror=function(){d.textContent='載入失敗：這個網站不允許外掛';setTimeout(function(){d.remove()},5000)};" +
       "document.body.appendChild(s)})();";
     const html = fs
       .readFileSync(path.join(here, "bookmarklet.html"), "utf8")
