@@ -1,6 +1,11 @@
 # 日文 → 中文 精準翻譯外掛
 
-一行 `<script>` 就能裝到任何網站的日中翻譯工具，使用 Claude（`claude-opus-5-5`，高思考強度）翻譯，重視**忠實、不漏譯、語氣與敬語正確**。
+一行 `<script>` 就能裝到任何網站的日中翻譯工具。可選兩種翻譯引擎：
+
+| 引擎 | 設定 | 費用 |
+|---|---|---|
+| **DeepL** | 環境變數 `DEEPL_API_KEY` | 免費方案每月 50 萬字 |
+| **Claude**（`claude-opus-5-5`，高思考強度，最講究語氣與敬語） | 環境變數 `ANTHROPIC_API_KEY`（且不設 `DEEPL_API_KEY`） | 依用量付費 |
 
 ## 功能
 - **選取翻譯**：在網頁上選取日文 → 出現「翻譯」小按鈕 → 彈出譯文（可複製）
@@ -23,7 +28,7 @@ API Key 只放在伺服器，**不能**直接寫在網頁裡（任何人都看�
 ```bash
 cd translator
 npm install
-cp .env.example .env     # 填入 ANTHROPIC_API_KEY 與你的網站網址 ALLOWED_ORIGINS
+cp .env.example .env     # 填入 DEEPL_API_KEY（或 ANTHROPIC_API_KEY）與你的網站網址 ALLOWED_ORIGINS
 npm start                # 預設 http://localhost:8787
 ```
 可部署到 Render、Railway、Fly.io、VPS 等任何能跑 Node 的地方。
@@ -61,4 +66,4 @@ JpZhTranslator.open("預先填入的日文");
 打開 `demo.html`（伺服器需在 localhost:8787 執行）。
 
 ## 費用提醒
-每次翻譯都會使用你的 Anthropic API 額度。伺服器已內建快取（相同句子不重複計費）與速率限制，建議 `ALLOWED_ORIGINS` 只填你自己的網域。
+DeepL 免費方案超過每月 50 萬字會停止翻譯（不會扣款）；Claude 每次翻譯都會使用你的 Anthropic API 額度。伺服器已內建快取（相同句子不重複計費）與速率限制，建議 `ALLOWED_ORIGINS` 只填你自己的網域。

@@ -66,9 +66,81 @@ function buildSystem(target) {
 ${glossaryText ? `專有名詞對照表（必須優先使用以下譯法）：\n${glossaryText}` : ""}`;
 }
 
-const client = new Anthropic(); // 從 ANTHROPIC_API_KEY 讀取
+// 使用哪個翻譯服務：有 DEEPL_API_KEY 就用 DeepL（免費方案），否則用 Claude
+const DEEPL_API_KEY = (process.env.DEEPL_API_KEY || "").trim();
+const PROVIDER = DEEPL_API_KEY ? "deepl" : "claude";
+const client = PROVIDER === "claude" ? new Anthropic() : null; // 從 ANTHROPIC_API_KEY 讀取
 
 async function translate(text, target, context) {
+  return PROVIDER === "deepl"
+    ? translateDeepL(text, target, context)
+    : translateClaude(text, target, context);
+}
+
+// ---- DeepL ----
+// 免費金鑰結尾是 ":fx"，要用 api-free 網址
+const DEEPL_URL = process.env.DEEPL_API_URL || (DEEPL_API_KEY.endsWith(":fx")
+  ? "https://api-free.deepl.com/v2/translate"
+  : "https://api.deepl.com/v2/translate");
+
+// 專有名詞：翻譯前先換成記號，翻譯後再換回指定譯法
+const esc = (t) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const unesc = (t) => t.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+
+function protectGlossary(text) {
+  const map = [];
+  const hasTerm = Object.keys(glossary).some((ja) => text.includes(ja));
+  if (!hasTerm) return { text, map };
+  text = esc(text);
+  const terms = Object.keys(glossary).sort((a, b) => b.length - a.length);
+  for (const ja of terms) {
+    if (!text.includes(ja)) continue;
+    const tag = `<g id="${map.length}"/>`;
+    map.push(glossary[ja]);
+    text = text.split(ja).join(tag);
+  }
+  return { text, map };
+}
+
+async function translateDeepL(text, target, context) {
+  const { text: prepared, map } = protectGlossary(text);
+  const body = {
+    text: [prepared],
+    source_lang: "JA",
+    target_lang: target === "zh-Hans" ? "ZH-HANS" : "ZH-HANT",
+    preserve_formatting: true,
+  };
+  if (map.length) body.tag_handling = "xml";
+  if (context) body.context = context;
+
+  const r = await fetch(DEEPL_URL, {
+    method: "POST",
+    headers: {
+      Authorization: `DeepL-Auth-Key ${DEEPL_API_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (!r.ok) {
+    const detail = await r.text().catch(() => "");
+    console.error("[deepl]", r.status, detail);
+    const msg =
+      r.status === 403 ? "伺服器 DeepL 金鑰設定錯誤" :
+      r.status === 456 ? "本月免費翻譯額度已用完" :
+      r.status === 429 ? "翻譯服務忙碌中，請稍後再試" :
+      "翻譯服務發生錯誤";
+    throw Object.assign(new Error(msg), { status: r.status === 429 ? 429 : 502 });
+  }
+  const data = await r.json();
+  let out = (data.translations?.[0]?.text || "").trim();
+  if (map.length) {
+    out = unesc(out.replace(/<g id="(\d+)"\s*\/>(?:<\/g>)?/g, (_, i) => esc(map[Number(i)] ?? "")));
+  }
+  return { translation: out, truncated: false };
+}
+
+// ---- Claude ----
+async function translateClaude(text, target, context) {
   const userContent =
     (context ? `<context>${context}</context>\n（上下文僅供參考，不要翻譯）\n\n` : "") +
     `<source>\n${text}\n</source>`;
@@ -215,5 +287,6 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`日中翻譯伺服器已啟動：http://localhost:${PORT}`);
+  console.log(`翻譯服務：${PROVIDER === "deepl" ? "DeepL" : "Claude"}`);
   console.log(`允許來源：${ALLOWED_ORIGINS.join(", ")}`);
 });
