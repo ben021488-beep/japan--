@@ -126,10 +126,11 @@
     });
   }
 
-  function open(prefill) {
+  function open(prefill, autoRun) {
     panel.classList.add("open");
     if (prefill) ta.value = prefill;
-    ta.focus();
+    if (prefill && autoRun) runPanel();
+    else ta.focus();
   }
   function closePanel() { panel.classList.remove("open"); }
 
@@ -174,14 +175,19 @@
   if (cfg.selection) {
     document.addEventListener("mouseup", onSelect);
     document.addEventListener("keyup", function (e) { if (e.shiftKey) onSelect(e); });
+    var selTimer;
     document.addEventListener("selectionchange", function () {
       var s = window.getSelection();
-      if (!s || s.isCollapsed) hideSel();
+      clearTimeout(selTimer);
+      if (!s || s.isCollapsed) return hideSel();
+      // 觸控裝置（iPad/iPhone）選取時沒有 mouseup，改用停頓後偵測
+      selTimer = setTimeout(function () { onSelect(); }, 500);
     });
   }
 
   function onSelect(e) {
     if (e && e.composedPath && e.composedPath().indexOf(host) !== -1) return;
+    if (!document.body.contains(host)) return;
     setTimeout(function () {
       var s = window.getSelection();
       var text = s ? s.toString().trim() : "";
@@ -202,6 +208,7 @@
   }
 
   selbtn.addEventListener("mousedown", function (e) { e.preventDefault(); });
+  selbtn.addEventListener("touchstart", function (e) { e.preventDefault(); selbtn.click(); }, { passive: false });
   selbtn.addEventListener("click", function () {
     var rect = selbtn.getBoundingClientRect();
     hideSel();

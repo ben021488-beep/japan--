@@ -240,6 +240,24 @@ const server = http.createServer(async (req, res) => {
     });
     return fs.createReadStream(path.join(here, "jp-zh-translator.js")).pipe(res);
   }
+  // 翻譯書籤設定頁（iPad / iPhone / 電腦都可用）
+  if (req.method === "GET" && url.pathname === "/bookmarklet") {
+    const proto = (req.headers["x-forwarded-proto"] || "http").split(",")[0];
+    const base = `${proto}://${req.headers.host}`;
+    const code =
+      "javascript:(function(){var t=String(getSelection()||'').trim();" +
+      "function go(){JpZhTranslator.open(t,!!t)}" +
+      "if(window.JpZhTranslator)return go();" +
+      "var s=document.createElement('script');" +
+      `s.src='${base}/jp-zh-translator.js?v='+Date.now();` +
+      "s.onload=go;s.onerror=function(){alert('翻譯工具載入失敗：這個網站不允許外掛')};" +
+      "document.body.appendChild(s)})();";
+    const html = fs
+      .readFileSync(path.join(here, "bookmarklet.html"), "utf8")
+      .replaceAll("{{CODE}}", code.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;"));
+    res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    return res.end(html);
+  }
   if (req.method === "GET" && url.pathname === "/health") return send(res, 200, { ok: true });
 
   if (url.pathname !== "/api/translate") return send(res, 404, { error: "Not found" });
