@@ -224,6 +224,11 @@
   document.addEventListener("keydown", function (e) { if (e.key === "Escape") { hidePop(); hideSel(); } });
   window.addEventListener("scroll", function () { hideSel(); }, { passive: true });
 
+  // 預先喚醒伺服器（免費主機閒置會休眠，第一次要等較久）
+  try {
+    fetch(new URL("/health", cfg.endpoint).href, { mode: "no-cors" }).catch(function () {});
+  } catch (e) {}
+
   function mount() { document.body.appendChild(host); }
   if (document.body) mount();
   else document.addEventListener("DOMContentLoaded", mount);
